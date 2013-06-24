@@ -4,10 +4,7 @@ JUnit Hammer adds two extensions to JUnit.  Firstly a runner for Java QuickCheck
 and secondly a micro benchmarking harness.
 
 
-Project Status:  Conceptual/Exploratory.  Started 10th June 2013.
-
-The following sections describe the current thinking on what this project will
-provide.
+*Project Status:  Conceptual/Exploratory.  Started 10th June 2013.*
 
 
 ## QuickCheck integration
@@ -28,24 +25,54 @@ the generators specified in the @Test annotation.
 Example:
 
     /**
-     * Calculator with a overflow bug in it.
+     * Calculator with a potential to overflow an int.
      */
     public class Calculator {
-        public long sum( int a, int b ) {
+        public int sum( int a, int b ) {
           return a + b;
+        }
+
+        public int subtract( int a, int b ) {
+          return a - b;
         }
     }
 
 
-    @TestRunner(Hammer.class)
+    /**
+     * Test that will fail due to over flow errors.
+     */
+    @RunWith(Hammer.class)
     public class CalculatorTests {
         private Calculator calc = new Calculator();
 
         @Test(IntGenerator,IntGenerator)
         public void sumTwoIntegers( int a, int b) {
-            long r = calc.sum(a,b)
+            int r = calc.sum(a,b)
 
-            assertEquals( (long) a + (long) b, r );
+            assertEquals( a + b, r );
+            assertEquals( a, calc.subtract(r,b) );
+            assertEquals( b, calc.subtract(r,a) );
+        }
+    }
+
+
+
+    /**
+     * Test that restricts its inputs to the valid input range.
+     */
+    @RunWith(Hammer.class)
+    public class CalculatorTests2 {
+        private static final Generator<Integer> HALF_INT_GENERATOR = ...;
+
+        private Calculator calc = new Calculator();
+
+        @Test(HALF_INT_GENERATOR,HALF_INT_GENERATOR)
+        public void sumTwoIntegers( int a, int b) {
+            int r = calc.sum(a,b)
+
+            assertEquals( a + b, r );
+            assertEquals( a, calc.subtract(r,b) );
+            assertEquals( b, calc.subtract(r,a) );
         }
     }
 
