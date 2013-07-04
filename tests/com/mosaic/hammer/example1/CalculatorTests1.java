@@ -3,12 +3,17 @@ package com.mosaic.hammer.example1;
 
 import com.mosaic.hammer.junit.Benchmark;
 import com.mosaic.hammer.junit.Hammer;
+import com.mosaic.hammer.junit.Test;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.Generators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.distribution.Distribution;
 import org.junit.Assume;
 import org.junit.runner.RunWith;
+
+import java.io.*;
+import java.net.*;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -36,7 +41,7 @@ public class CalculatorTests1 {
 
         assertEquals( a + b, r );
         assertEquals( a, calc.subtract(r,b) );
-        assertEquals( b, calc.subtract(r,a) );
+        assertEquals(b, calc.subtract(r, a));
     }
 
     @com.mosaic.hammer.junit.Test(generators={"intGenerator","intGenerator"})
@@ -55,6 +60,78 @@ public class CalculatorTests1 {
     public void benchmark() {
         calc.sum(100,(int) System.nanoTime());
     }
+
+//    @Benchmark(value=5, batchCount = 3)
+//    public long readFile() throws IOException {
+//        long sum = 0;
+//
+//        InputStream in = new FileInputStream("/Users/ck/t/wordlist.txt");
+//        try {
+//            int v = in.read();
+//            while ( v >= 0 ) {
+//                sum += v;
+//                v = in.read();
+//            }
+//        } finally {
+//            in.close();
+//        }
+//
+//        return sum;
+//    }
+//
+//    @Benchmark(value=5, batchCount = 3)
+//    public long readFileBatched() throws IOException {
+//        long sum = 0;
+//        byte[] batch = new byte[4096];
+//        InputStream in = new FileInputStream("/Users/ck/t/wordlist.txt");
+//        try {
+//            int numBytes = in.read(batch);
+//            while ( numBytes >= 0 ) {
+//                sum += numBytes;
+//                numBytes = in.read(batch);
+//            }
+//        } finally {
+//            in.close();
+//        }
+//
+//        return sum;
+//    }
+//
+//    @Benchmark(value=5, batchCount = 3)
+//    public long readFileBatchedAndBuffered() throws IOException {
+//        long sum = 0;
+//        byte[] batch = new byte[4096];
+//        InputStream in = new BufferedInputStream(new FileInputStream("/Users/ck/t/wordlist.txt"));
+//        try {
+//            int numBytes = in.read(batch);
+//            while ( numBytes >= 0 ) {
+//                sum += numBytes;
+//                numBytes = in.read(batch);
+//            }
+//        } finally {
+//            in.close();
+//        }
+//
+//        return sum;
+//    }
+//
+//    @Benchmark(value=5, batchCount = 3)
+//    public long readFileBuffered() throws IOException {
+//        long sum = 0;
+//
+//        InputStream in = new BufferedInputStream(new FileInputStream("/Users/ck/t/wordlist.txt"));
+//        try {
+//            int v = in.read();
+//            while ( v >= 0 ) {
+//                sum += v;
+//                v = in.read();
+//            }
+//        } finally {
+//            in.close();
+//        }
+//
+//        return sum;
+//    }
 
     @Benchmark
     public void nanoTimeBenchmark() {

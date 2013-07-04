@@ -200,8 +200,9 @@ class InvokeBenchmarkMethod extends Statement {
     private void invokeAndReportBatch() throws Throwable {
         long durationNanos = invokeBatch();
         double perCallNanos = ((double) durationNanos)/annotation.value();
+        double perCallMillis = perCallNanos / 1000000.0;
 
-        System.out.println( "run: " + perCallNanos + "ns" );
+        System.out.println( "run: " + perCallNanos + "ns  ("+perCallMillis+"ms)" );
     }
 
     private long invokeBatch() throws Throwable {
