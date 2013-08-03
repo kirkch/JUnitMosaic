@@ -16,26 +16,41 @@ import java.net.*;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(Hammer.class)
 public class CalculatorTests1 {
-    private final Generator intGenerator = PrimitiveGenerators.integers(100, 2000, Distribution.POSITIV_NORMAL);
+    private final Generator intGenerator = PrimitiveGenerators.integers();
 
 
     private Calculator calc = new Calculator();
 
-    @com.mosaic.hammer.junit.Test //(IntGenerator,IntGenerator)
+    /**
+     * Uncomment this test to demonstrate what happens when there is an error.
+     */
+//    @com.mosaic.hammer.junit.Test(generators={"intGenerator","intGenerator"})
+    public void sumTwoIntegersFails( int a, int b) {
+        int r = calc.sum(a,b);
+
+        assertEquals( a + b, r );
+        assertEquals( a, calc.subtract(r,b) );
+        assertEquals( b, calc.subtract(r,a) );
+        assertTrue(r > a);
+        assertTrue( r > b );
+    }
+
+    @Test
     public void sumTwoIntegers() {
         sumTwoIntegersQC(10, 10);
     }
 
-    @org.junit.Test //(IntGenerator,IntGenerator)
+    @org.junit.Test
     public void junitTest() {
         sumTwoIntegersQC(10, 10);
     }
 
-    @com.mosaic.hammer.junit.Test(generators={"intGenerator","intGenerator"})
+    @Test(generators={"intGenerator","intGenerator"})
     public void sumTwoIntegersQC( int a, int b) {
         int r = calc.sum(a,b);
 
@@ -44,10 +59,8 @@ public class CalculatorTests1 {
         assertEquals(b, calc.subtract(r, a));
     }
 
-    @com.mosaic.hammer.junit.Test(generators={"intGenerator","intGenerator"})
+    @Test(generators={"intGenerator","intGenerator"})
     public void verifyAssumeBehaviour( int a, int b) {
-//        System.out.println( a+","+b + "->"+(a>b) );
-
         Assume.assumeTrue(a > b);
 
         if ( a < b ) {

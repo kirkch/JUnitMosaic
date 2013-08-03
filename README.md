@@ -4,7 +4,7 @@ JUnit Hammer adds two extensions to JUnit.  Firstly a runner for Java QuickCheck
 and secondly a micro benchmarking harness.
 
 
-*Project Status:  Conceptual/Exploratory.  Started 10th June 2013.*
+*Project Status:  Exploratory.  The basics work, feedback to help improve the project welcome.*
 
 
 ## QuickCheck integration
@@ -43,15 +43,20 @@ Example:
      */
     @RunWith(Hammer.class)
     public class CalculatorTests {
+        private final Generator intGenerator = PrimitiveGenerators.integers();
+
         private Calculator calc = new Calculator();
 
-        @Test(IntGenerator,IntGenerator)
+        @com.mosaic.hammer.junit.Test(generators={"intGenerator","intGenerator"})
         public void sumTwoIntegers( int a, int b) {
-            int r = calc.sum(a,b)
+            int r = calc.sum(a,b);
 
             assertEquals( a + b, r );
             assertEquals( a, calc.subtract(r,b) );
             assertEquals( b, calc.subtract(r,a) );
+
+            assertTrue( r > a );
+            assertTrue( r > b );
         }
     }
 
@@ -62,27 +67,52 @@ Example:
      */
     @RunWith(Hammer.class)
     public class CalculatorTests2 {
-        private static final Generator<Integer> HALF_INT_GENERATOR = ...;
+        private static final Generator<Integer> HALF_INT_GENERATOR = PrimitiveGenerators.integers(1, Integer.MAX_VALUE/2, Distribution.POSITIV_NORMAL);
 
         private Calculator calc = new Calculator();
 
-        @Test(HALF_INT_GENERATOR,HALF_INT_GENERATOR)
+        @Test(generators={"HALF_INT_GENERATOR","HALF_INT_GENERATOR"})
         public void sumTwoIntegers( int a, int b) {
             int r = calc.sum(a,b)
 
             assertEquals( a + b, r );
             assertEquals( a, calc.subtract(r,b) );
             assertEquals( b, calc.subtract(r,a) );
+
+
+            assertTrue( r > a );
+            assertTrue( r > b );
         }
     }
 
+    /**
+     * Test that restricts its inputs using JUnit's Assume mechanism.
+     */
+    @RunWith(Hammer.class)
+    public class CalculatorTests2 {
+        private static final Generator<Integer> HALF_INT_GENERATOR = PrimitiveGenerators.integers(1, Integer.MAX_VALUE/2, Distribution.POSITIV_NORMAL);
 
-### Extra Generators
+        private Calculator calc = new Calculator();
 
-QuickCheck only comes with a set of base generators used to build up more powerful
-generators.  Such as one for most of the primitive types, and collections.  Here
-we add to this a set of common scenarios such as URLs, peoples names, email addresses
-and so forth.
+        @Test(generators={"HALF_INT_GENERATOR","HALF_INT_GENERATOR"})
+        public void sumTwoIntegers( int a, int b) {
+            Assume.assumeTrue(a > b);
+
+            if ( a < b ) {
+                fail("a is not allowed to be less than b for this test");
+            }
+
+            int r = calc.sum(a,b)
+
+            assertEquals( a + b, r );
+            assertEquals( a, calc.subtract(r,b) );
+            assertEquals( b, calc.subtract(r,a) );
+
+
+            assertTrue( r > a );
+            assertTrue( r > b );
+        }
+    }
 
 
 
@@ -103,12 +133,76 @@ compared over time/checkins to visualise trends.
 
 
     @TestRunner(Hammer.class)
-    public class CalculatorTests {
+    public class CalculatorBenchmark1 {
         private Calculator calc = new Calculator();
 
-        @Benchmark(InMemory)
-        public long sumTwoIntegers( int iterationNumber ) {
+        /**
+         * This method will be called Benchmark.value times (defaults to 100,000)
+         * and Benchmark.batchCount times (defaults to 6).  Each batch run will
+         * have System.gc() invoked before starting and at the end of the run
+         * an average duration of each call will be printed.
+         */
+        @Benchmark()
+        public void sumTwoIntegers() {
+            calc.sum(i,i);
+        }
+    }
+
+    @TestRunner(Hammer.class)
+    public class CalculatorBenchmark2 {
+        private Calculator calc = new Calculator();
+
+        /**
+         * Because Java can be too clever for its own good, we may want to
+         * calculate a value and return it from the test method.  This prevents
+         * the JVM from spotting that the method has no side effects and
+         * discards the code as dead code.
+         */
+        @Benchmark()
+        public long sumTwoIntegers() {
             return calc.sum(i,i);
         }
     }
+
+
+    @TestRunner(Hammer.class)
+    public class CalculatorBenchmark3 {
+        private Calculator calc = new Calculator();
+
+        /**
+         * Because Java can be too clever for its own good, we may want to
+         * calculate a value and return it from the test method.  This prevents
+         * the JVM from spotting that the method has no side effects and
+         * discards the code as dead code.
+         */
+        @Benchmark()
+        public long sumTwoIntegers() {
+            return calc.sum(i,i);
+        }
+    }
+
+    @TestRunner(Hammer.class)
+    public class CalculatorBenchmark4 {
+        private Calculator calc = new Calculator();
+
+        /**
+         * Because the benchmark framework will invoke the previous methods
+         * a default of 100,000 times using reflection.  The overheads of using
+         * reflection will be significant.  By adding an int parameter to the
+         * method, the framework will pass the iterationCount to the method
+         * and then call the method once.  Rellying on the method to handle its
+         * own iteration.
+         */
+        @Benchmark()
+        public long sumTwoIntegers( int iterationCount ) {
+            long sum = 0;
+
+            for ( int i=0; i<iterationCount; i++ ) {
+                sum += calc.sum(i,i);
+            }
+
+            return sum;
+        }
+    }
+
 
