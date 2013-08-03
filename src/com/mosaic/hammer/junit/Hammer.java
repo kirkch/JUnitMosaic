@@ -188,6 +188,8 @@ class InvokeBenchmarkMethod extends Statement {
 
         TestExecutionLock.acquireBenchmarkLock();
 
+        System.out.println( "Invoking "+fTestMethod.getMethod().getDeclaringClass().getSimpleName()+"."+fTestMethod.getName() + ", " + annotation.batchCount() + "times; printing averages over " + annotation.value() + " calls per batch:");
+
         try {
             for ( int i=0; i<annotation.batchCount(); i++ ) {
                 invokeAndReportBatch();
@@ -198,11 +200,17 @@ class InvokeBenchmarkMethod extends Statement {
     }
 
     private void invokeAndReportBatch() throws Throwable {
-        long durationNanos = invokeBatch();
-        double perCallNanos = ((double) durationNanos)/annotation.value();
+        long   durationNanos = invokeBatch();
+        double perCallNanos  = ((double) durationNanos)/annotation.value();
         double perCallMillis = perCallNanos / 1000000.0;
 
-        System.out.println( "run: " + perCallNanos + "ns  ("+perCallMillis+"ms)" );
+        if ( perCallMillis < 1 ) {
+            System.out.print( String.format("%.2f",perCallNanos)  );
+            System.out.println( "ns" );
+        } else {
+            System.out.print( String.format("%.2f",perCallMillis)  );
+            System.out.print( "ms" );
+        }
     }
 
     private long invokeBatch() throws Throwable {
@@ -212,9 +220,12 @@ class InvokeBenchmarkMethod extends Statement {
         Method method        = fTestMethod.getMethod();
 
         long startNanos = System.nanoTime();
-        for ( int i=0; i<numIterations; i++ ) {
-            fTestMethod.invokeExplosively(fTarget);
-            method.invoke(fTarget);
+        if ( method.getParameterTypes().length == 1 ) {
+            method.invoke(fTarget, annotation.value());
+        } else {
+            for ( int i=0; i<numIterations; i++ ) {
+                method.invoke(fTarget);
+            }
         }
 
         return System.nanoTime() - startNanos;
