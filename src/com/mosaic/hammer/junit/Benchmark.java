@@ -34,4 +34,12 @@ public @interface Benchmark {
      */
     int batchCount() default 6;
 
+
+    /**
+     * Multiply the times printed after the benchmark.  Useful if you want
+     * the time to process a single line of text and each call processed 100
+     * lines.  In that example the multiplier would be 0.01.
+     */
+    double durationResultMultiplier() default 1.0;
+
 }

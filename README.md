@@ -7,7 +7,7 @@ and secondly a micro benchmarking harness.
 *Project Status:  Exploratory.  The basics work, feedback to help improve the project welcome.*
 
 For now this project is not in a Maven repository; to use checkout the project
-and compile using maven. 
+and compile using maven.
 
 
 ## QuickCheck integration
