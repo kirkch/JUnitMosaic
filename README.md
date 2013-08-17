@@ -1,6 +1,6 @@
-# JUnit Hammer
+# JUnit JUnitPro
 
-JUnit Hammer adds two extensions to JUnit.  Firstly a runner for Java QuickCheck
+JUnit JUnitPro adds two extensions to JUnit.  Firstly a runner for Java QuickCheck
 and secondly a micro benchmarking harness.
 
 
@@ -44,13 +44,13 @@ Example:
     /**
      * Test that will fail due to over flow errors.
      */
-    @RunWith(Hammer.class)
+    @RunWith(JUnitPro.class)
     public class CalculatorTests {
         private final Generator intGenerator = PrimitiveGenerators.integers();
 
         private Calculator calc = new Calculator();
 
-        @com.mosaic.hammer.junit.Test(generators={"intGenerator","intGenerator"})
+        @com.mosaic.junitpro.Test(generators={"intGenerator","intGenerator"})
         public void sumTwoIntegers( int a, int b) {
             int r = calc.sum(a,b);
 
@@ -68,7 +68,7 @@ Example:
     /**
      * Test that restricts its inputs to the valid input range.
      */
-    @RunWith(Hammer.class)
+    @RunWith(JUnitPro.class)
     public class CalculatorTests2 {
         private static final Generator<Integer> HALF_INT_GENERATOR = PrimitiveGenerators.integers(1, Integer.MAX_VALUE/2, Distribution.POSITIV_NORMAL);
 
@@ -91,7 +91,7 @@ Example:
     /**
      * Test that restricts its inputs using JUnit's Assume mechanism.
      */
-    @RunWith(Hammer.class)
+    @RunWith(JUnitPro.class)
     public class CalculatorTests2 {
         private static final Generator<Integer> HALF_INT_GENERATOR = PrimitiveGenerators.integers(1, Integer.MAX_VALUE/2, Distribution.POSITIV_NORMAL);
 
@@ -121,7 +121,7 @@ Example:
 
 ## Micro Benchmarks
 
-When a method is annotated with @Benchmark, Hammer will ensure that this is the
+When a method is annotated with @Benchmark, JUnitPro will ensure that this is the
 only method to be run at that time and will time it over many runs; throwing
 away the initial runs to warm up the optimisers and running the Garbage Collector
 between each run.  The results of each run can then be stored over time and
@@ -135,7 +135,7 @@ compared over time/checkins to visualise trends.
     }
 
 
-    @TestRunner(Hammer.class)
+    @TestRunner(JUnitPro.class)
     public class CalculatorBenchmark1 {
         private Calculator calc = new Calculator();
 
@@ -151,7 +151,7 @@ compared over time/checkins to visualise trends.
         }
     }
 
-    @TestRunner(Hammer.class)
+    @TestRunner(JUnitPro.class)
     public class CalculatorBenchmark2 {
         private Calculator calc = new Calculator();
 
@@ -168,7 +168,7 @@ compared over time/checkins to visualise trends.
     }
 
 
-    @TestRunner(Hammer.class)
+    @TestRunner(JUnitPro.class)
     public class CalculatorBenchmark3 {
         private Calculator calc = new Calculator();
 
@@ -184,7 +184,7 @@ compared over time/checkins to visualise trends.
         }
     }
 
-    @TestRunner(Hammer.class)
+    @TestRunner(JUnitPro.class)
     public class CalculatorBenchmark4 {
         private Calculator calc = new Calculator();
 
@@ -193,7 +193,7 @@ compared over time/checkins to visualise trends.
          * a default of 100,000 times using reflection.  The overheads of using
          * reflection will be significant.  By adding an int parameter to the
          * method, the framework will pass the iterationCount to the method
-         * and then call the method once.  Rellying on the method to handle its
+         * and then call the method once.  Relying on the method to handle its
          * own iteration.
          */
         @Benchmark()

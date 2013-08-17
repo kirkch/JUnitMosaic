@@ -1,4 +1,4 @@
-package com.mosaic.hammer.junit;
+package com.mosaic.junitpro;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,10 +26,10 @@ public @interface Test {
      * The test method must have exactly the same number of generators specified
      * as the number of declared parameters in this annotation.  If the test
      * method has no parameters then JUnit will behave as usual.  If however
-     * there are parameters, and matching generators then Hammer will tell
+     * there are parameters, and matching generators then JUnitPro will tell
      * JUnit to run the test method 'repeat' times; which defaults to 100.
      * On each iteration the methods parameters will be generated from new
-     * using quick check.  The Hammer runner will support JUnit's assume
+     * using quick check.  The JUnitPro runner will support JUnit's assume
      * methods, discarding any run that fails an assumption.
      */
     String[] generators() default {};

@@ -1,25 +1,19 @@
-package com.mosaic.hammer.example1;
+package com.mosaic.junitpro.example1;
 
 
-import com.mosaic.hammer.junit.Benchmark;
-import com.mosaic.hammer.junit.Hammer;
-import com.mosaic.hammer.junit.Test;
+import com.mosaic.junitpro.Benchmark;
+import com.mosaic.junitpro.JUnitPro;
+import com.mosaic.junitpro.Test;
 import net.java.quickcheck.Generator;
-import net.java.quickcheck.generator.Generators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
-import net.java.quickcheck.generator.distribution.Distribution;
 import org.junit.Assume;
 import org.junit.runner.RunWith;
-
-import java.io.*;
-import java.net.*;
-import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@RunWith(Hammer.class)
+@RunWith(JUnitPro.class)
 public class CalculatorTests1 {
     private final Generator intGenerator = PrimitiveGenerators.integers();
 
@@ -29,7 +23,7 @@ public class CalculatorTests1 {
     /**
      * Uncomment this test to demonstrate what happens when there is an error.
      */
-//    @com.mosaic.hammer.junit.Test(generators={"intGenerator","intGenerator"})
+//    @com.mosaic.junitpro.Test(generators={"intGenerator","intGenerator"})
     public void sumTwoIntegersFails( int a, int b) {
         int r = calc.sum(a,b);
 

@@ -1,4 +1,4 @@
-package com.mosaic.hammer;
+package com.mosaic.junitpro;
 
 /**
  *

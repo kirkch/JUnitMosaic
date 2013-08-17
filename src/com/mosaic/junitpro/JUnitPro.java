@@ -1,4 +1,4 @@
-package com.mosaic.hammer.junit;
+package com.mosaic.junitpro;
 
 import net.java.quickcheck.Generator;
 import org.junit.internal.AssumptionViolatedException;
@@ -16,11 +16,11 @@ import java.util.List;
  *
  */
 @SuppressWarnings("unchecked")
-public class Hammer extends BlockJUnit4ClassRunner {
+public class JUnitPro extends BlockJUnit4ClassRunner {
 
     private List<FrameworkMethod> list = null;
 
-    public Hammer(Class<?> klass) throws InitializationError {
+    public JUnitPro(Class<?> klass) throws InitializationError {
         super(klass);
     }
 

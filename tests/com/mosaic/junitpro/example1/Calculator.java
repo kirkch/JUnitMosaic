@@ -1,4 +1,4 @@
-package com.mosaic.hammer.example1;
+package com.mosaic.junitpro.example1;
 
 /**
  * Calculator with a potential to overflow an int.

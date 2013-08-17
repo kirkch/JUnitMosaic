@@ -1,9 +1,10 @@
-package com.mosaic.hammer.junit;
+package com.mosaic.junitpro;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- *
+ * Permits multi executions of @Test methods, but only one @Benchmark test at
+ * a time.
  */
 public class TestExecutionLock {
 
