@@ -7,6 +7,9 @@ import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -66,6 +69,9 @@ class InvokeTestMethod extends Statement {
     private final Object          fTarget;
     private final Test            testAnnotation;
 
+    private ReferenceQueue  referenceQueue;
+    private List<Reference> memCheckReferences;
+
     public InvokeTestMethod( FrameworkMethod testMethod, Object target, Test testAnnotation ) {
         fTestMethod         = testMethod;
         fTarget             = target;
@@ -85,15 +91,64 @@ class InvokeTestMethod extends Statement {
             for ( int i=0; i<numRuns; i++ ) {
                 Object[] paramValues = generateParameterValues( generators );
 
+                setupWeakReferencesForMemCheck(paramValues);
+
                 try {
                     fTestMethod.invokeExplosively(fTarget, paramValues);
                 } catch (AssumptionViolatedException e) {
                     // ignore failed assumptions
+                } finally {
+                    paramValues = null;  // makes the param values GC'able
+
+                    assertWeakReferencesForMemCheck();
                 }
             }
         } finally {
             TestExecutionLock.releaseTestLock();
         }
+    }
+
+    private void setupWeakReferencesForMemCheck( Object[] paramValues ) {
+        if ( !isMemCheckEnabled() ) {
+            return;
+        }
+
+        referenceQueue     = new ReferenceQueue();
+        memCheckReferences = new ArrayList<Reference>();
+
+        for ( Object o : paramValues ) {
+            Reference ref = new PhantomReference(o, referenceQueue);
+
+            memCheckReferences.add(ref);
+        }
+    }
+
+    private boolean isMemCheckEnabled() {
+        return testAnnotation != null && testAnnotation.memCheck();
+    }
+
+    private void assertWeakReferencesForMemCheck() throws InterruptedException {
+        if ( !isMemCheckEnabled() ) {
+            return;
+        }
+
+
+
+        while ( memCheckReferences.size() > 0 ) {
+            System.gc();
+
+            Reference ref = referenceQueue.remove(5000);
+            if ( ref == null ) {
+                throw new IllegalStateException( "GC not complete within 5 seconds" );
+            }
+
+            memCheckReferences.remove(ref);
+        }
+
+
+
+        referenceQueue = null;
+        memCheckReferences = null;
     }
 
     private void verifyParameters() {

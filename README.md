@@ -1,7 +1,10 @@
 # JUnit JUnitPro
 
-JUnit JUnitPro adds two extensions to JUnit.  Firstly a runner for Java QuickCheck
-and secondly a micro benchmarking harness.
+JUnit JUnitPro adds several extensions to JUnit.  It adds a number of configurable
+assertions that are useful for validating memory and thread usage, a convenient
+micro benchmarking harness and a tool for generating a range of input values which
+helps test a wider range of data without having to explicitly code each of them.
+
 
 
 *Project Status:  Exploratory.  The basics work, feedback to help improve the project welcome.*
@@ -22,8 +25,8 @@ readability.  A rare productivity win/win.
 ### QuickCheck Runner
 
 The following example is runnable from any JUnit environment, and it runs the
-marked test 100 times.  The arguments a and b are created afresh each run from
-the generators specified in the @Test annotation.
+marked test 100 times.  The arguments a and b are created afresh with different
+values each run, from the generators specified in the @Test annotation.
 
 Example:
 
