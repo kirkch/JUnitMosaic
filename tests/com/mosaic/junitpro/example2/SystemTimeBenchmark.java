@@ -10,12 +10,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnitExt.class)
 public class SystemTimeBenchmark {
 
-    @Benchmark
+    @Benchmark( units="call to nanoTime()" )
     public void nanoTimeBenchmark() {
         System.nanoTime();
     }
 
-    @Benchmark
+    @Benchmark( units="call to currentTimeMillis()" )
     public void currentTimeMillisBenchmark() {
         System.currentTimeMillis();
     }

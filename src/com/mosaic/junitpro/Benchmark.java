@@ -10,14 +10,15 @@ import java.lang.annotation.Target;
  * Marks the method as being a micro benchmark.  This will change JUnit's behaviour
  * when executing the method:<p/>
  *
- * - wait for any other tests to complete before starting<p/>
- * - prevent any other tests from starting<p/>
- * - run methods annotated with @Before<p/>
- * - trigger GC then invoke the method 'value' times while timing in nano seconds<p/>
- * - repeat GC and invoke 'value()' times again and again up to batchCount() times<p/>
- * - report<p/>
- * - allow other tests to begin<p/>
- *
+ * <ol>
+ *   <li>wait for any other tests to complete before starting</li>
+ *   <li>prevent any other tests from starting</li>
+ *   <li>run methods annotated with @Before</li>
+ *   <li>trigger GC then invoke the method 'value' times while timing in nano seconds</li>
+ *   <li>repeat GC and invoke 'value()' times again and again up to batchCount() times</li>
+ *   <li>report</li>
+ *   <li>allow other tests to begin</li>
+ * </ol>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
@@ -26,7 +27,7 @@ public @interface Benchmark {
     /**
      * Invoke the test method this many times between
      */
-    int value() default 100000;
+    int value() default 1000000;
 
     /**
      * How many times to measure the test method.  Each measurement is taken in
@@ -36,10 +37,17 @@ public @interface Benchmark {
 
 
     /**
-     * Multiply the times printed after the benchmark.  Useful if you want
-     * the time to process a single line of text and each call processed 100
-     * lines.  In that example the multiplier would be 0.01.
+     * Multiply the times printed by the benchmark.  Useful if you want
+     * to adjust the 'units' of the result to account for how many times
+     * an operation was carried out during a test. For example if the test
+     * processed 100 lines of text and you wanted the average timing per line
+     * of text processed then the multiplier would be 0.01 (or 1.0/100).
      */
     double durationResultMultiplier() default 1.0;
 
+    /**
+     * A short description of what is being timed.  Used when printing the
+     * results.
+     */
+    String units() default "call";
 }

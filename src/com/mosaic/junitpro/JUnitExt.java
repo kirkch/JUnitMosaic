@@ -228,28 +228,36 @@ class InvokeBenchmarkMethod extends Statement {
 
         TestExecutionLock.acquireBenchmarkLock();
 
-        System.out.println( "Invoking "+fTestMethod.getMethod().getDeclaringClass().getSimpleName()+"."+fTestMethod.getName() + ", " + annotation.batchCount() + "times; printing averages over " + annotation.value() + " calls per batch:");
+        System.out.println( "Benchmark results for: " );
+        System.out.println( "Invoking "+fTestMethod.getMethod().getDeclaringClass().getSimpleName()+"."+fTestMethod.getName() + " (batchCount=" + annotation.batchCount() + ", iterationCount=" + annotation.value() + ", timingMultipler=" + annotation.durationResultMultiplier() + ")" );
+        System.out.println( "    " );
 
         try {
-            for ( int i=0; i<annotation.batchCount(); i++ ) {
-                invokeAndReportBatch();
+            for ( int i=0; i<annotation.batchCount()+1; i++ ) {
+                invokeAndReportBatch(i);
             }
         } finally {
             TestExecutionLock.releaseBenchmarkLock();
         }
     }
 
-    private void invokeAndReportBatch() throws Throwable {
-        double durationNanos = invokeBatch() * annotation.durationResultMultiplier();
+    private void invokeAndReportBatch( int runCount ) throws Throwable {
+        long   durationNanosRaw = invokeBatch();
+        double durationNanos    = durationNanosRaw * annotation.durationResultMultiplier();
+
         double perCallNanos  = durationNanos / annotation.value();
         double perCallMillis = perCallNanos  / 1000000.0;
 
-        if ( perCallMillis < 1 ) {
-            System.out.print( String.format("%.2f",perCallNanos)  );
-            System.out.println( "ns" );
-        } else {
-            System.out.print( String.format("%.2f",perCallMillis)  );
-            System.out.print( "ms" );
+        if ( runCount > 0 ) {
+            System.out.print( "    " );
+
+            if ( perCallMillis < 1 ) {
+                System.out.print( String.format("%.2f",perCallNanos)  );
+                System.out.println( "ns per " + annotation.units() );
+            } else {
+                System.out.print( String.format("%.2f",perCallMillis)  );
+                System.out.print( "ms per " + annotation.units() );
+            }
         }
     }
 
