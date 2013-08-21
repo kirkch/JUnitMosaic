@@ -1,0 +1,45 @@
+
+
+
+
+MemCheck Functionality
+===================
+
+Evaluated java-allocation-instrumenter
+--------------------
+
+Has to be installed at boot time as a javaagent.  Runtime installation failed
+due to the need to modify bootstrap classes.
+
+Even when @Test(memCheck=false) java-allocation-instrumenter slowed the tests
+by 100ms per run; which compounded badly with the generator approach of
+re-running the same test multiple times with random data.  @Benchmark results
+were not reliable when java-allocation-instrumenter was installed.  Thus users
+had to restart the JVM and toggle java-allocation-instrumenter based on their
+needs; fiddly.
+
+When @Test(memCheck=true), then tests ran some 800ms slower.
+
+java-allocation-instrumenter did catch all object allocations, which creates
+problems when code ligitimately caches or resizes internal data structures.
+
+Conclusion: too slow, and too fidly for users to switch on/off for @Benchmark tests.
+
+
+Options:
+
+- Enhance java-allocation-instrumenter; discounted as the java agent approach
+is going to require end users to take action to use.
+- Create a ClassLoader solution, and let the system select between a normal
+ClassLoader and a slower mem checking ClassLoader.  Possible candidate, but discounted
+for now as it will take some time to implement and will still have an issue with code
+that caches data/resizes internal structures (a hack for this was to run the
+ test twice, and only memcheck the second run).
+- Only test for memory leaks against values created via a generator and passed in to the
+test.  This is significantly faster to run (and implement) while hitting most use
+cases; but at the cost of missing other memory leaks not involving those values.
+Selected as a first pass at this functionality, to verify value.  How much use will it
+get used in practice?
+
+
+

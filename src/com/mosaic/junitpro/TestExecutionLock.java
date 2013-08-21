@@ -10,12 +10,20 @@ public class TestExecutionLock {
 
     private static ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    public static void acquireTestLock() {
-        rwLock.readLock().lock();
+    public static void acquireTestLock( boolean memCheckEnabled ) {
+        if ( memCheckEnabled ) {
+            rwLock.writeLock().lock();
+        } else {
+            rwLock.readLock().lock();
+        }
     }
 
-    public static void releaseTestLock() {
-        rwLock.readLock().unlock();
+    public static void releaseTestLock( boolean memCheckEnabled ) {
+        if ( memCheckEnabled ) {
+            rwLock.writeLock().unlock();
+        } else {
+            rwLock.readLock().unlock();
+        }
     }
 
     public static void acquireBenchmarkLock() {
