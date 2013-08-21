@@ -2,7 +2,7 @@ package com.mosaic.junitpro.example1;
 
 
 import com.mosaic.junitpro.Benchmark;
-import com.mosaic.junitpro.JUnitPro;
+import com.mosaic.junitpro.JUnitExt;
 import com.mosaic.junitpro.Test;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@RunWith(JUnitPro.class)
+@RunWith(JUnitExt.class)
 public class CalculatorTests1 {
     private final Generator intGenerator = PrimitiveGenerators.integers();
 

@@ -1,13 +1,13 @@
 package com.mosaic.junitpro.example2;
 
 import com.mosaic.junitpro.Benchmark;
-import com.mosaic.junitpro.JUnitPro;
+import com.mosaic.junitpro.JUnitExt;
 import org.junit.runner.RunWith;
 
 /**
  *
  */
-@RunWith(JUnitPro.class)
+@RunWith(JUnitExt.class)
 public class SystemTimeBenchmark {
 
     @Benchmark

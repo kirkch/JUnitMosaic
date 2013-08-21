@@ -18,7 +18,7 @@ import java.util.List;
  *
  */
 @SuppressWarnings("unchecked")
-public class JUnitPro extends BlockJUnit4ClassRunner {
+public class JUnitExt extends BlockJUnit4ClassRunner {
 
     static {
         MemChecker.startMemCheckRegion(false);  // dummy call to bootstrap the MemChecker class before it is needed
@@ -27,7 +27,7 @@ public class JUnitPro extends BlockJUnit4ClassRunner {
 
     private List<FrameworkMethod> list = null;
 
-    public JUnitPro(Class<?> klass) throws InitializationError {
+    public JUnitExt(Class<?> klass) throws InitializationError {
         super(klass);
     }
 
@@ -91,7 +91,7 @@ class InvokeTestMethod extends Statement {
 
         // TODO default generator values
 
-        TestExecutionLock.acquireTestLock( isMemCheckEnabled );
+        TestExecutionLock.acquireTestLock();
 
         try {
             for ( int i=0; i<numRuns; i++ ) {
@@ -117,7 +117,7 @@ class InvokeTestMethod extends Statement {
                 }
             }
         } finally {
-            TestExecutionLock.releaseTestLock( isMemCheckEnabled );
+            TestExecutionLock.releaseTestLock();
         }
     }
 

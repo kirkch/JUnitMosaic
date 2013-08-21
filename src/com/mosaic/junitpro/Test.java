@@ -26,10 +26,10 @@ public @interface Test {
      * The test method must have exactly the same number of generators specified
      * as the number of declared parameters in this annotation.  If the test
      * method has no parameters then JUnit will behave as usual.  If however
-     * there are parameters, and matching generators then JUnitPro will tell
+     * there are parameters, and matching generators then JUnitExt will tell
      * JUnit to run the test method 'repeat' times; which defaults to 100.
      * On each iteration the methods parameters will be generated from new
-     * using quick check.  The JUnitPro runner will support JUnit's assume
+     * using quick check.  The JUnitExt runner will support JUnit's assume
      * methods, discarding any run that fails an assumption.
      */
     String[] generators() default {};
@@ -45,15 +45,14 @@ public @interface Test {
 
 
     /**
-     * Any memory allocated during the test is garbage collectable by the end
-     * of the test. <p/>
+     * Checks for memory leaks. If true then any parameter passed into the
+     * test will be tested for a memory leak after the test has finished.<p/>
      *
-     * First version will only check that the quick check generated values
-     * passed into the test are GC'ed.  For full check beyond that we need
-     * to instrument classes on the fly (see https://code.google.com/p/java-allocation-instrumenter/wiki/GettingStarted)
+     * Note that setting this option to true on tests that do not take any parameters
+     * is considered an error.  Purely to help communicate that this check is only
+     * for those parameters and not for objects instantiated during the test.
      */
     boolean memCheck() default false;
-
 
 
 }

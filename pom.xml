@@ -4,9 +4,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mosaic</groupId>
-    <artifactId>junitpro</artifactId>
+    <artifactId>junitext</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
+    <name>JUnit Extensions</name>
+    
     <packaging>jar</packaging>
 
 
