@@ -91,10 +91,11 @@ class InvokeTestMethod extends Statement {
 
         // TODO default generator values
 
-        TestExecutionLock.acquireTestLock();
+        TestExecutionLock.acquireTestLock( testAnnotation );
 
         try {
             for ( int i=0; i<numRuns; i++ ) {
+                ThreadChecker.testAboutToStart(testAnnotation);
                 MemChecker.startMemCheckRegion( isMemCheckEnabled );
 
                 Object[] paramValues = generateParameterValues( generators );
@@ -114,10 +115,11 @@ class InvokeTestMethod extends Statement {
                     paramValues = null;  // makes the param values GC'able
 
                     MemChecker.endMemCheckRegion();
+                    ThreadChecker.testHasFinished(testAnnotation);
                 }
             }
         } finally {
-            TestExecutionLock.releaseTestLock();
+            TestExecutionLock.releaseTestLock( testAnnotation );
         }
     }
 

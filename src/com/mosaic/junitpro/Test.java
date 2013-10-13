@@ -41,12 +41,13 @@ public @interface Test {
      * to true will result in this test being run by itself and not in parallel
      * with other tests.
      */
-    // boolean threadCheck() default false;
+    boolean threadCheck() default false;
 
 
     /**
-     * Checks for memory leaks. If true then any parameter passed into the
-     * test will be tested for a memory leak after the test has finished.<p/>
+     * Checks for memory leaks. It is expected that all objects passed into the
+     * test method as parameters, must be garbage collectable by the end of the
+     * test method.  If they are not, then the test will fail.<p/>
      *
      * Note that setting this option to true on tests that do not take any parameters
      * is considered an error.  Purely to help communicate that this check is only
