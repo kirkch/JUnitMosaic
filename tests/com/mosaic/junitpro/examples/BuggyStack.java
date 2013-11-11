@@ -1,10 +1,10 @@
-package com.mosaic.junitpro.example1;
+package com.mosaic.junitpro.examples;
 
 /**
  * Stack with a potential to overflow and does not clear out old values
  * which will cause the potential for premature tenuring of objects.
  */
-public class Stack {
+public class BuggyStack {
 
     private Object[] stack  = new Object[10];
     private int      offset = 0;

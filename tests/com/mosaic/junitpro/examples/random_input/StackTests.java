@@ -1,9 +1,10 @@
-package com.mosaic.junitpro.example1;
+package com.mosaic.junitpro.examples.random_input;
 
 
 import com.mosaic.junitpro.Benchmark;
 import com.mosaic.junitpro.JUnitExt;
 import com.mosaic.junitpro.Test;
+import com.mosaic.junitpro.examples.BuggyStack;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
@@ -13,6 +14,9 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.assertEquals;
 
 
+/**
+ * An example that is unit testing a buggy implementation of a stack.
+ */
 @RunWith(JUnitExt.class)
 @SuppressWarnings("ALL")
 public class StackTests {
@@ -21,9 +25,12 @@ public class StackTests {
     private final Generator stringsGenerator   = CombinedGenerators.arrays(PrimitiveGenerators.strings(), arraySizeGenerator, String.class);
 
 
-    private Stack stack = new Stack();
+    private BuggyStack stack = new BuggyStack();
 
 
+    /**
+     * Example that @Test works as the standard JUnit annotation does.
+     */
     @Test
     public void pushPop() {
         assertEquals( 0, stack.size() );
@@ -35,63 +42,16 @@ public class StackTests {
         assertEquals( 0, stack.size() );
     }
 
-    @Test
-    public void pushPushPopPop() {
-        stack.push("foo");
-        stack.push("bar");
-
-        assertEquals( 2, stack.size() );
-
-        assertEquals( "bar", stack.pop() );
-        assertEquals( "foo", stack.pop() );
-
-        assertEquals( 0, stack.size() );
-    }
-
-    /*
-     * Uncomment this test to demonstrate that the stack does not resize.
-     */
-//    @com.mosaic.junitpro.Test(generators={"stringsGenerator"})
-    public void sumTwoIntegersFails( String[] values ) {
-        pushAll(values);
-
-        popAndAssertAllValues(values);
-    }
 
     @Test(generators={"stringsGenerator"})
     public void verifyAssumeBehaviour( String[] values ) {
-        Assume.assumeTrue( values.length < 10 );
+        Assume.assumeTrue( values.length < 10 );   // NB comment out this line to discover that BuggyStack does not resize itself internally
 
         pushAll(values);
 
         popAndAssertAllValues(values);
     }
 
-    /*
-     * Uncomment this annotation to have JUnit detect that the stack holds on
-     * to popped items.
-     */
-//    @Test(memCheck=true, generators={"stringsGenerator"})
-    public void detectMemoryLeaks( String[] values ) {
-        Assume.assumeTrue( values.length < 10 );
-
-        pushAll(values);
-    }
-
-    @Benchmark( durationResultMultiplier=1.0/3 )
-    public int benchmark( int limit  ) {
-        for ( int i=0; i<limit; i++ ) {
-            stack.push("a");
-            stack.push("b");
-            stack.push("c");
-
-            stack.pop();
-            stack.pop();
-            stack.pop();
-        }
-
-        return stack.size();
-    }
 
 
     private void pushAll(String[] values) {

@@ -26,6 +26,7 @@ problems when code ligitimately caches or resizes internal data structures.
 Conclusion: too slow, and too fidly for users to switch on/off for @Benchmark tests.
 
 
+
 Options:
 
 - Enhance java-allocation-instrumenter; discounted as the java agent approach

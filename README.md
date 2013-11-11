@@ -3,10 +3,10 @@
 
 JUnitExt adds several extensions to JUnit.
 
- - adds support for parameters to JUnit test methods
+ - adds support for method parameters to JUnit test methods
  - detection of memory leaks
  - detection of threads that are started during a test but not shut down
- - support for quick and dirty micro benchmarks
+ - support for micro benchmarks
 
 
 
@@ -17,13 +17,12 @@ For now this project is not in a Maven repository; to use checkout the project
 and compile using maven.
 
 
+
 ## QuickCheck integration
 
-[QuickCheck](https://java.net/projects/quickcheck/pages/Home) is a combinator generator
-library.  In combination with JUnit as a test harness, QuickCheck allows the
-reuse of declared boundary conditions for method inputs, reducing the amount of
-test code that has to be written to cover the same number of tests; while also increasing
-readability.  A rare productivity win/win.
+[QuickCheck](https://java.net/projects/quickcheck/pages/Home) is used to generate random values
+on demand.  This supports schotastic testing of a rule that should always hold no matter what the
+input is.  Especially useful for testing a range of boundary conditions quickly, and with less code.
 
 
 ### QuickCheck Runner
@@ -35,69 +34,12 @@ values each run, from the generators specified in the @Test annotation.
 
 Example:
 
-    public class Stack {
-
-        private Object[] stack  = new Object[10];
-        private int      offset = 0;
-
-
-        public void push( Object o ) {
-            stack[offset++] = o;
-        }
-
-        public Object pop() {
-            return stack[--offset];
-        }
-
-        public int size() {
-            return offset;
-        }
-
-    }
-
-Traditional JUnit Test:
-
-    public class StackTests {
-
-        private Stack stack = new Stack();
-
-
-        @Test
-        public void pushPop() {
-            assertEquals( 0, stack.size() );
-
-            stack.push("foo");
-            assertEquals( 1, stack.size() );
-
-            assertEquals( "foo", stack.pop() );
-            assertEquals( 0, stack.size() );
-        }
-
-        @Test
-        public void pushPushPopPop() {
-            stack.push("foo");
-            stack.push("bar");
-
-            assertEquals( 2, stack.size() );
-
-            assertEquals( "bar", stack.pop() );
-            assertEquals( "foo", stack.pop() );
-
-            assertEquals( 0, stack.size() );
-        }
-
-        // etc etc etc
-    }
-
-The traditional JUnit tests still have value as they make the testing of key
-scenarios explicit, however there are a lot of scenarios if one is to cover all
-edge cases.  Repeating a test to scan a wide range of edge cases can be automated.
-Consider the following code which will fail when run.  It will detect that
-the stack cannot cope with more than ten items.
-
-
+@RunWith(JUnitExt.class)
+public class StackTest {
     private final Generator arraySizeGenerator = PrimitiveGenerators.integers(1,100);
     private final Generator stringsGenerator   = CombinedGenerators.arrays(PrimitiveGenerators.strings(), arraySizeGenerator, String.class);
+
+    private Stack stack = new Stack();
 
 
     @Test(generators={"stringsGenerator"})
@@ -106,6 +48,7 @@ the stack cannot cope with more than ten items.
 
         popAndAssertAllValues(values);
     }
+
 
     private void pushAll(String[] values) {
         for ( String v : values ) {
@@ -122,6 +65,7 @@ the stack cannot cope with more than ten items.
 
         assertEquals( 0, stack.size() );
     }
+}
 
 For situations where the generators create a scenario that is invalid then
 either new generators can be created that avoid it or JUnit's assumeThat mechanism
@@ -138,23 +82,19 @@ will never need to store more than 10 values and so this test will pass.
         popAndAssertAllValues(values);
     }
 
+
+
 ## Mem Check
 
 Memory leaks can occur in Java, even with the existence of a Garbage Collector.
-Java uses a Generational Garbage Collector, which means that a different
-algorithm with different performance characteristics is used depending on the
-age of the java objects.  The Stack example above does not clear out references
-that it is holding, which means it can lead at worst to a memory leak or more
-subtly the JVM could use the slower GC algorithm in cases that could have
-avoided it.
+A Stack that did not clear out references to objects popped from it could cause significantly slow
+the Garbage Collector as objects that should have been collected become tenured instead.
 
 The following unit test will detect this memory leak.
 
 
     @Test(memCheck=true, generators={"stringsGenerator"})
     public void verifyAssumeBehaviour( String[] values ) {
-        Assume.assumeTrue( values.length < 10 );
-
         pushAll(values);
 
         popAndAssertAllValues(values);
@@ -171,7 +111,7 @@ garbage collected, and errors if they cannot be.
 
 When a method is annotated with @Benchmark, JUnitExt will ensure that this is the
 only method to be run at that time and will time it over many runs; throwing
-away the initial runs to warm up the optimisers and running the Garbage Collector
+away the initial runs to warm up the runtime optimisers and running the Garbage Collector
 between each run.  The results of each run can then be stored over time and
 compared with previous runs to visualise trends.
 

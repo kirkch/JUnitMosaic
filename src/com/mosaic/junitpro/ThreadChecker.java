@@ -38,7 +38,7 @@ public class ThreadChecker {
                 }
 
                 public String reasonForFailure() {
-                    return "The following threads were not running when the test started, and have not shutdown in a timely matter after the test finished: " + remainingThreadNames;
+                    return "The following threads were not running when the test started, and have not shutdown in a timely manner after the test finished: " + remainingThreadNames;
                 }
             });
         } finally {
