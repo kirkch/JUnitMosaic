@@ -1,6 +1,6 @@
 package com.mosaic.junitpro.examples.microbenchmarks;
 
-import com.mosaic.junitpro.Benchmark;
+import com.mosaic.junitpro.annotations.Benchmark;
 import com.mosaic.junitpro.JUnitExt;
 import org.junit.runner.RunWith;
 

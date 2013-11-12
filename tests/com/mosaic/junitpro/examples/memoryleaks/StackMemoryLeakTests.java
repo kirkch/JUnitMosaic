@@ -1,7 +1,6 @@
 package com.mosaic.junitpro.examples.memoryleaks;
 
-import com.mosaic.junitpro.Benchmark;
-import com.mosaic.junitpro.Test;
+import com.mosaic.junitpro.annotations.Test;
 import com.mosaic.junitpro.examples.BuggyStack;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;

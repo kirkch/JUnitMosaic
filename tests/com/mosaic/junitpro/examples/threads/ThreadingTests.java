@@ -1,9 +1,7 @@
 package com.mosaic.junitpro.examples.threads;
 
-import com.mosaic.junitpro.Assert;
 import com.mosaic.junitpro.JUnitExt;
-import com.mosaic.junitpro.Predicate;
-import com.mosaic.junitpro.Test;
+import com.mosaic.junitpro.annotations.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -1,5 +1,6 @@
 package com.mosaic.junitpro;
 
+import com.mosaic.junitpro.annotations.Test;
 import org.junit.runner.RunWith;
 
 /**

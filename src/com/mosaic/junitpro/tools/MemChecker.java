@@ -1,4 +1,4 @@
-package com.mosaic.junitpro;
+package com.mosaic.junitpro.tools;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;

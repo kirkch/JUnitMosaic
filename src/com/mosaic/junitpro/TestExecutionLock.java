@@ -1,5 +1,7 @@
 package com.mosaic.junitpro;
 
+import com.mosaic.junitpro.annotations.Test;
+
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 

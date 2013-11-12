@@ -1,4 +1,8 @@
-package com.mosaic.junitpro;
+package com.mosaic.junitpro.tools;
+
+import com.mosaic.junitpro.Assert;
+import com.mosaic.junitpro.Predicate;
+import com.mosaic.junitpro.annotations.Test;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,13 +30,13 @@ public class ThreadChecker {
         }
 
         try {
-            Assert.assertEventually( 5000, new Predicate() {
+            Assert.assertEventually(5000, new Predicate() {
                 private Set<String> remainingThreadNames;
 
                 public boolean eval() {
                     this.remainingThreadNames = getActiveThreadNames();
 
-                    remainingThreadNames.removeAll( initialThreadNames );
+                    remainingThreadNames.removeAll(initialThreadNames);
 
                     return remainingThreadNames.isEmpty();
                 }
