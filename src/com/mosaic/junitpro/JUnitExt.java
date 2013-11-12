@@ -4,6 +4,7 @@ package com.mosaic.junitpro;
 
 import com.mosaic.junitpro.annotations.Benchmark;
 import com.mosaic.junitpro.annotations.Test;
+import com.mosaic.junitpro.lang.TestExecutionLock;
 import com.mosaic.junitpro.tools.MemChecker;
 import com.mosaic.junitpro.tools.ThreadChecker;
 import net.java.quickcheck.Generator;
@@ -95,7 +96,7 @@ class InvokeTestMethod extends Statement {
 
         // TODO default generator values
 
-        TestExecutionLock.acquireTestLock( testAnnotation );
+        TestExecutionLock.acquireTestLock(testAnnotation);
 
         try {
             for ( int i=0; i<numRuns; i++ ) {

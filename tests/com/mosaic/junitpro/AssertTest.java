@@ -1,6 +1,7 @@
 package com.mosaic.junitpro;
 
 import com.mosaic.junitpro.annotations.Test;
+import com.mosaic.junitpro.lang.Predicate;
 import org.junit.runner.RunWith;
 
 /**

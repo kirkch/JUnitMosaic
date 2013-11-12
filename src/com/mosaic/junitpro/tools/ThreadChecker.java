@@ -1,7 +1,7 @@
 package com.mosaic.junitpro.tools;
 
 import com.mosaic.junitpro.Assert;
-import com.mosaic.junitpro.Predicate;
+import com.mosaic.junitpro.lang.Predicate;
 import com.mosaic.junitpro.annotations.Test;
 
 import java.util.HashSet;

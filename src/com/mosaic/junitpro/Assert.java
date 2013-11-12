@@ -1,5 +1,7 @@
 package com.mosaic.junitpro;
 
+import com.mosaic.junitpro.lang.Predicate;
+
 /**
  *
  */

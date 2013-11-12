@@ -1,4 +1,4 @@
-package com.mosaic.junitpro;
+package com.mosaic.junitpro.lang;
 
 /**
  *
