@@ -1,6 +1,8 @@
 package com.mosaic.junitpro;
 
 import com.mosaic.junitpro.lang.Predicate;
+import com.mosaic.junitpro.tools.AssertionJob;
+import com.mosaic.junitpro.tools.ConcurrentAsserter;
 
 /**
  *
@@ -26,4 +28,13 @@ public class Assert extends org.junit.Assert {
         }
     }
 
+    public static void multiThreadedAssert( AssertionJob cloneableJob ) {
+        multiThreadedAssert( Runtime.getRuntime().availableProcessors()*4, cloneableJob );
+    }
+
+    public static void multiThreadedAssert( int numThreads, AssertionJob cloneableJob ) {
+        ConcurrentAsserter worker = new ConcurrentAsserter( numThreads, cloneableJob );
+
+        worker.run();
+    }
 }

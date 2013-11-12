@@ -141,10 +141,10 @@ compared with previous runs to visualise trends.
          * and thus optimising the contents away.
          */
         @Benchmark( batchCount=10, units="call to nanoTime()" )
-        public long nanoSecondBenchmark_avoidingReflectionOverhead( int numIterations) {
+        public long nanoSecondBenchmark_avoidingReflectionOverhead( int maxNumIterations) {
             long sum = 0;
 
-            for ( int i=0; i<numIterations; i++ ) {
+            for ( int i=0; i<maxNumIterations; i++ ) {
                 sum += System.nanoTime();
             }
 
