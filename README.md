@@ -5,7 +5,7 @@ JUnitExt adds several extensions to JUnit.
 
  - adds support for method parameters to JUnit test methods
  - detection of memory leaks
- - detection of threads that are started during a test but not shut down
+ - tools for testing concurrent code
  - support for micro benchmarks
 
 
@@ -172,4 +172,89 @@ of iterations.  The time printed is thus:  (durationOfCallingMethodIterationCoun
 Timing multiplier is used to adjust the time displayed to match the units that you expect the result to be in. For example,
 if during your test you read in 100 lines of text then you may multiply the result by 1.0/100 to get the average duration
 per line of text processed.
+
+
+## Testing Concurrent Code
+
+### Stochastic Testing
+
+Spin up n threads that perform the same step with random data against the concurrent data structure.  After
+all of the threads have completed, verify the results.
+
+The following example starts up n threads.  Each thread will invoke the 'step()' method of an AssertJob m times from
+each thread, passing in the 'state' of the thread on each call.  The state always null on the first call, and will
+be the value returned from the last call to 'step()' from that thread.  The AssertJob itself must be immutable.
+
+The code that starts the threads, makes the calls to 'step()' and waits for all of the threads to complete
+is:
+
+    Assert.multiThreadedAssert(new AssertJob<List<String>>() {...})
+
+Its result is a list of the state of each of the threads used in the test.  The test method is then free
+to process the results in any way that is required.  In this example the state is a collection of every
+object pushed on to the stack.  Thus the final test after the threads have finished pushing is to verify
+that the objects in the stack match the objects reported as having been pushed.
+
+
+    @RunWith(JUnitExt.class)
+    @SuppressWarnings("ALL")
+    public class MultiThreadedTest {
+
+        private static final Generator<String > RND_STRING = PrimitiveGenerators.strings();
+
+
+        @Test
+        public void concurrentPushPopTest() {
+            final List<String> stack = Collections.synchronizedList(new ArrayList<String>());
+
+            List<List<String>> perThreadResults = Assert.multiThreadedAssert(new AssertJob<List<String>>() {
+                public List<String> step( List<String> expectedStateSoFar ) {
+                    if ( expectedStateSoFar == null ) {
+                        expectedStateSoFar = new ArrayList<String>();
+                    }
+
+                    String v = RND_STRING.next();
+
+                    stack.add(v);
+                    expectedStateSoFar.add(v);
+
+                    return expectedStateSoFar;
+                }
+            });
+
+
+            verifyStack( stack, perThreadResults );
+        }
+
+
+        private void verifyStack( List<String> stack, List<List<String>> perThreadResults ) {
+            List<String> allPushedItems = flatten( perThreadResults );
+
+            while ( !stack.isEmpty() ) {
+                String head = stack.remove(0);
+
+                boolean wasRemoved = allPushedItems.remove(head);
+                assertTrue( "stack is not thread safe; stack contained a value that was not reported to have been pushed: '" +head+"'", wasRemoved );
+            }
+
+            assertEquals( "stack is not thread safe; the stack has lost the following items: " + allPushedItems, 0, allPushedItems.size() );
+        }
+
+        private List<String> flatten(List<List<String>> perThreadResults) {
+            List<String> all = new ArrayList<String>();
+
+            for ( List<String> resultsFromOneThread : perThreadResults ) {
+                if ( resultsFromOneThread != null ) {
+                    all.addAll( resultsFromOneThread );
+                }
+            }
+
+            return all;
+        }
+
+    }
+
+
+
+
 

@@ -3,7 +3,7 @@ package com.mosaic.junitpro.examples.threads;
 import com.mosaic.junitpro.Assert;
 import com.mosaic.junitpro.JUnitExt;
 import com.mosaic.junitpro.annotations.Test;
-import com.mosaic.junitpro.tools.AssertionJob;
+import com.mosaic.junitpro.tools.AssertJob;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import org.junit.runner.RunWith;
@@ -11,9 +11,10 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 
 /**
@@ -23,127 +24,88 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings("ALL")
 public class MultiThreadedTest {
 
-    private static final Generator<Integer> RND_INT    = PrimitiveGenerators.integers(1, 100);
     private static final Generator<String > RND_STRING = PrimitiveGenerators.strings();
-
-
-    private List<String> stack = Collections.synchronizedList(new ArrayList<String>());
-//    private List<String> stack = new ArrayList<String>();
-
 
 
     @Test
     public void concurrentPushPopTest() {
-        Assert.multiThreadedAssert( new PushPopAssertionJob() );
+        final List<String> stack = Collections.synchronizedList(new ArrayList<String>());
+
+        List<List<String>> perThreadResults = Assert.multiThreadedAssert(new AssertJob<List<String>>() {
+            public List<String> step( List<String> expectedStateSoFar ) {
+                if ( expectedStateSoFar == null ) {
+                    expectedStateSoFar = new ArrayList<String>();
+                }
+
+                String v = RND_STRING.next();
+
+                stack.add(v);
+                expectedStateSoFar.add(v);
+
+                return expectedStateSoFar;
+            }
+        });
+
+
+        verifyStack( stack, perThreadResults );
+    }
+
+    @Test
+    public void concurrentPushPopTest_expectToDetectThatStackIsNotThreadSafe() {
+        final List<String> stack = new ArrayList<String>();
+
+        try {
+            List<List<String>> perThreadResults = Assert.multiThreadedAssert(new AssertJob<List<String>>() {
+                public List<String> step( List<String> expectedStateSoFar ) {
+                    if ( expectedStateSoFar == null ) {
+                        expectedStateSoFar = new ArrayList<String>();
+                    }
+
+                    String v = RND_STRING.next();
+
+                    stack.add(v);
+                    expectedStateSoFar.add(v);
+
+                    return expectedStateSoFar;
+                }
+            });
+
+
+
+            verifyStack( stack, perThreadResults );
+
+            fail( "expected there to be a problem" );
+        } catch ( Throwable e ) {
+
+        }
     }
 
 
-    private class PushPopAssertionJob extends AssertionJob {
-        private List<String> valuesPushed;
-        private List<String> valuesPopped;
 
-        private int          maxNumIterations;
-        private int          iterationCount;
 
-        public PushPopAssertionJob() {
-            this( new ArrayList<String>(), new ArrayList<String>() );
+    private void verifyStack( List<String> stack, List<List<String>> perThreadResults ) {
+        List<String> allPushedItems = flatten( perThreadResults );
+
+        while ( !stack.isEmpty() ) {
+            String head = stack.remove(0);
+
+            boolean wasRemoved = allPushedItems.remove(head);
+            assertTrue( "stack is not thread safe; stack contained a value that was not reported to have been pushed: '" +head+"'", wasRemoved );
         }
 
-        public PushPopAssertionJob( List<String> pushedValues, List<String> valuesPopped ) {
-            this.valuesPushed = pushedValues;
-            this.valuesPopped = valuesPopped;
-        }
-
-
-        public void invoke() {
-            iterationCount++;
-
-            String newValue = RND_STRING.next();
-
-
-            stack.add(newValue);
-            valuesPushed.add(newValue);
-
-            if ( shouldPop() ) {
-                valuesPopped.add((String) stack.remove(0));
-            }
-
-            if ( iterationCount >= maxNumIterations ) {
-                complete();
-            }
-        }
-
-        public AssertionJob merge( AssertionJob o ) {
-            PushPopAssertionJob other = (PushPopAssertionJob) o;
-            PushPopAssertionJob j = (PushPopAssertionJob) super.merge(other);
-
-
-            j.valuesPushed = mergeLists( this.valuesPushed, other.valuesPushed );
-            j.valuesPopped = mergeLists( this.valuesPopped, other.valuesPopped );
-
-
-            return j;
-        }
-
-        private List<String> mergeLists(List<String> a, List<String> b) {
-            List<String> r = new ArrayList<String>( a.size() + b.size() );
-
-            r.addAll(a);
-            r.addAll(b);
-
-            return r;
-        }
-
-        public void performAsserts() {
-            List<String> expectedContents = generateExpectedContentsOfStack();
-            List<String> actualContents   = popAll();
-
-            Collections.sort(actualContents);
-            Collections.sort(expectedContents);
-
-            assertEquals( actualContents, expectedContents );
-        }
-
-        private List<String> generateExpectedContentsOfStack() {
-            List<String> expectedContents = new ArrayList<String>();
-            expectedContents.addAll( this.valuesPushed );
-            for ( String v : this.valuesPopped ) {
-                expectedContents.remove(v);
-            }
-
-            return expectedContents;
-        }
-
-        @Override
-        public PushPopAssertionJob clone() {
-            PushPopAssertionJob clone = (PushPopAssertionJob) super.clone();
-
-            clone.maxNumIterations = RND_INT.next();
-            clone.valuesPopped = new ArrayList<String>();
-            clone.valuesPushed = new ArrayList<String>();
-
-            clone.valuesPopped.addAll( this.valuesPopped );
-            clone.valuesPushed.addAll( this.valuesPushed );
-
-            return clone;
-        }
-
-        private boolean shouldPop() {
-            return RND_INT.next() > 80 && stack.size() > 10;
-        }
-
-        private List<String> popAll() {
-            List<String> contents = new ArrayList<String>();
-
-            while ( stack.size() > 0 ) {
-                String remove = (String) stack.remove(0);
-
-                contents.add(remove);
-            }
-
-            return contents;
-        }
+        assertEquals( "stack is not thread safe; the stack has lost the following items: " + allPushedItems, 0, allPushedItems.size() );
     }
 
+    private List<String> flatten(List<List<String>> perThreadResults) {
+        List<String> all = new ArrayList<String>();
+
+        for ( List<String> resultsFromOneThread : perThreadResults ) {
+            if ( resultsFromOneThread != null ) {
+                all.addAll( resultsFromOneThread );
+            }
+        }
+
+        return all;
+    }
 
 }

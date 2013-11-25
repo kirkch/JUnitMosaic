@@ -1,62 +1,95 @@
 package com.mosaic.junitpro.tools;
 
 import com.mosaic.junitpro.Assert;
+import net.java.quickcheck.Generator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Spin up n threads that invoke the step() method of the supplied instance of AssertJob.  This
+ * method will not return until all of the threads have completed calling 'step()' a random number
+ * of times.<p/>
  *
+ * Each thread will invoke the 'step()' method by passing in the 'state' of the thread on each call.
+ * The state is always null on the first call, and from then on will be the value returned from
+ * the last call to 'step()' from that thread.<p/>
+ *
+ * The AssertJob itself must be immutable.<p/>
+ *
+ * This class is usually used from 'Assert.multiThreadedAssert()'.
  */
-public class ConcurrentAsserter {
+@SuppressWarnings("unchecked")
+public class ConcurrentAsserter<T> {
 
-    private int          numThreads;
-    private AssertionJob cloneableJob;
+    private int             numThreads;
+    private AssertJob<T>    concurrentJob;
 
-    private List<AssertionJob> allJobs = new ArrayList<AssertionJob>();
+    private List<T>         allResults;
+    private List<Throwable> failedJobs = new Vector();
+
+    private Generator<Integer> numStepsPerThreadGenerator;
 
 
-    public ConcurrentAsserter( int numThreads, AssertionJob cloneableJob ) {
-        this.numThreads   = numThreads;
-        this.cloneableJob = cloneableJob;
+    public ConcurrentAsserter( int numThreads, AssertJob concurrentJob, Generator<Integer> numStepsPerThreadGenerator ) {
+        this.numThreads                 = numThreads;
+        this.concurrentJob              = concurrentJob;
+        this.numStepsPerThreadGenerator = numStepsPerThreadGenerator;
+
+        allResults = new ArrayList<T>( numThreads );
+
+        for ( int i=0; i<numThreads; i++ ) {
+            allResults.add(null);
+        }
     }
 
 
-    public void run() {
+    public List<T> runToCompletion() {
         CountDownLatch latch = new CountDownLatch(numThreads);
 
 
         startWorkerThreads( latch );
         waitForWorkerThreads( latch );
 
-        assertResults();
+        throwIfAnyThreadErrored();
+
+        return collectResults();
+    }
+
+    private void throwIfAnyThreadErrored() {
+        if ( !failedJobs.isEmpty() ) {
+            throw new RuntimeException( "Concurrent task threw an exception in "+failedJobs.size()+" threads.  Here is the stack trace of the first recorded exception.", failedJobs.get(0) );
+        }
     }
 
     private void startWorkerThreads( final CountDownLatch latch ) {
         for ( int i=0; i<numThreads; i++ ) {
-            startWorkerThread(latch);
+            startWorkerThread( i, latch );
         }
     }
 
 
-    private void startWorkerThread(final CountDownLatch latch) {
-        final AssertionJob job = cloneableJob.clone();
-
-        allJobs.add( job );
-
+    private void startWorkerThread( final int workerNumber, final CountDownLatch latch ) {
+        final int numSteps = numStepsPerThreadGenerator.next();
 
         new Thread() {
             public void run() {
                 try {
-                    while ( !job.isComplete() ) {
-                        Thread.yield();
+                    T stateSoFar = null;
 
-                        job.invoke();
+                    for ( int i=0; i<numSteps; i++ ) {
+//                        Thread.yield();
+
+                        stateSoFar = concurrentJob.step(stateSoFar);
                     }
+
+                    allResults.set( workerNumber, stateSoFar );
                 } catch ( Throwable e ) {
-                    job.failed( e );
+                    failedJobs.add(e);
                 } finally {
                     latch.countDown();
                 }
@@ -76,24 +109,14 @@ public class ConcurrentAsserter {
         }
     }
 
-    private void assertResults() {
-        AssertionJob mergedJob = mergeAllJobs();
+    private List<T> collectResults() {
+        List<T> allResults = new ArrayList(numThreads);
 
-        if ( mergedJob.didFail() ) {
-            throw new RuntimeException( mergedJob.getException() );
+        for ( T singleThreadsResults : this.allResults) {
+            allResults.add( singleThreadsResults );
         }
 
-        mergedJob.performAsserts();
-    }
-
-    private AssertionJob mergeAllJobs() {
-        AssertionJob mergedJob = cloneableJob.clone();
-
-        for ( AssertionJob j : allJobs ) {
-            mergedJob = mergedJob.merge(j);
-        }
-
-        return mergedJob;
+        return allResults;
     }
 
 }
