@@ -97,10 +97,10 @@ public class ConcurrentStochasticTest {
         assertEquals( "stack is not thread safe; the stack has lost the following items: " + allPushedItems, 0, allPushedItems.size() );
     }
 
-    private List<String> flatten(List<List<String>> perThreadResults) {
-        List<String> all = new ArrayList<String>();
+    private <T> List<T> flatten( List<List<T>> perThreadResults ) {
+        List<T> all = new ArrayList<T>();
 
-        for ( List<String> resultsFromOneThread : perThreadResults ) {
+        for ( List<T> resultsFromOneThread : perThreadResults ) {
             if ( resultsFromOneThread != null ) {
                 all.addAll( resultsFromOneThread );
             }
