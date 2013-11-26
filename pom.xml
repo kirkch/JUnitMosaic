@@ -3,11 +3,11 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.mosaic</groupId>
-    <artifactId>junitext</artifactId>
+    <groupId>com.softwaremosaic</groupId>
+    <artifactId>junit</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
-    <name>JUnit Extensions</name>
+    <name>JUnit Mosaic</name>
     
     <packaging>jar</packaging>
 

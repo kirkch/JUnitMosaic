@@ -1,7 +1,7 @@
-# JUnit JUnitExt
+# JUnit Mosaic
 
 
-JUnitExt adds several extensions to JUnit.
+JUnitMosaic adds several extensions to JUnit.
 
  - adds support for method parameters to JUnit test methods
  - detection of memory leaks
@@ -11,7 +11,7 @@ JUnitExt adds several extensions to JUnit.
 
 
 
-*Project Status:  Exploratory.  The basics work, feedback to help improve the project welcome.*
+*Project Status:  Nearing First Release*
 
 For now this project is not in a Maven repository; to use checkout the project
 and compile using maven.
@@ -34,7 +34,7 @@ values each run, from the generators specified in the @Test annotation.
 
 Example:
 
-@RunWith(JUnitExt.class)
+@RunWith(JUnitMosaic.class)
 public class StackTest {
     private final Generator arraySizeGenerator = PrimitiveGenerators.integers(1,100);
     private final Generator stringsGenerator   = CombinedGenerators.arrays(PrimitiveGenerators.strings(), arraySizeGenerator, String.class);
@@ -109,7 +109,7 @@ garbage collected, and errors if they cannot be.
 
 ## Micro Benchmarks
 
-When a method is annotated with @Benchmark, JUnitExt will ensure that this is the
+When a method is annotated with @Benchmark, JUnitMosaic will ensure that this is the
 only method to be run at that time and will time it over many runs; throwing
 away the initial runs to warm up the runtime optimisers and running the Garbage Collector
 between each run.  The results of each run can then be stored over time and
@@ -117,7 +117,7 @@ compared with previous runs to visualise trends.
 
 
 
-    @RunWith(JUnitExt.class)
+    @RunWith(JUnitMosaic.class)
     public class SystemTimeBenchmark {
 
         @Benchmark
@@ -196,7 +196,7 @@ object pushed on to the stack.  Thus the final test after the threads have finis
 that the objects in the stack match the objects reported as having been pushed.
 
 
-    @RunWith(JUnitExt.class)
+    @RunWith(JUnitMosaic.class)
     @SuppressWarnings("ALL")
     public class MultiThreadedTest {
 
