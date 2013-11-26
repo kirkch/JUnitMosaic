@@ -6,6 +6,18 @@
 - mark code changes on results
 
 
-- merge with threadtesting project
-- create ConcurrentAsserter
+
+- delete thread testing mosaic project (as the merge is complete)
 - default generators
+
+
+
+blog posts
+
+- manual memory leak detection
+- auto leak detection
+- detecting start/stop of threads
+- stochastic testing of concurrent data structure
+- generating a unique value within a test run
+- benchmarking
+- spinning vs sleeping vs waiting

@@ -18,11 +18,12 @@ import static org.junit.Assert.fail;
 
 
 /**
- *
+ * An example testing a concurrent data structure by pushing and popping
+ * random values from multiple threads.
  */
 @RunWith(JUnitExt.class)
 @SuppressWarnings("ALL")
-public class MultiThreadedTest {
+public class ConcurrentStochasticTest {
 
     private static final Generator<String > RND_STRING = PrimitiveGenerators.strings();
 
@@ -31,9 +32,9 @@ public class MultiThreadedTest {
     public void concurrentPushPopTest() {
         final List<String> stack = Collections.synchronizedList(new ArrayList<String>());
 
-        List<List<String>> perThreadResults = Assert.multiThreadedAssert(new AssertJob<List<String>>() {
-            public List<String> step( List<String> expectedStateSoFar ) {
-                if ( expectedStateSoFar == null ) {
+        List<List<String>> perThreadResults = Assert.runFromMultipleThreads(new AssertJob<List<String>>() {
+            public List<String> step(List<String> expectedStateSoFar) {
+                if (expectedStateSoFar == null) {
                     expectedStateSoFar = new ArrayList<String>();
                 }
 
@@ -55,9 +56,9 @@ public class MultiThreadedTest {
         final List<String> stack = new ArrayList<String>();
 
         try {
-            List<List<String>> perThreadResults = Assert.multiThreadedAssert(new AssertJob<List<String>>() {
-                public List<String> step( List<String> expectedStateSoFar ) {
-                    if ( expectedStateSoFar == null ) {
+            List<List<String>> perThreadResults = Assert.runFromMultipleThreads(new AssertJob<List<String>>() {
+                public List<String> step(List<String> expectedStateSoFar) {
+                    if (expectedStateSoFar == null) {
                         expectedStateSoFar = new ArrayList<String>();
                     }
 

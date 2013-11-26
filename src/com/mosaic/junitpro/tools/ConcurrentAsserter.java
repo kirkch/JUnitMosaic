@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  *
  * The AssertJob itself must be immutable.<p/>
  *
- * This class is usually used from 'Assert.multiThreadedAssert()'.
+ * This class is usually used from 'Assert.runFromMultipleThreads()'.
  */
 @SuppressWarnings("unchecked")
 public class ConcurrentAsserter<T> {

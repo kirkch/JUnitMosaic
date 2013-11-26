@@ -7,7 +7,8 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- *
+ * Example of asking the framework to detect whether any threads started after the
+ * test completes within a small time period after the test has completed.
  */
 @RunWith(JUnitExt.class)
 public class ThreadingTests {

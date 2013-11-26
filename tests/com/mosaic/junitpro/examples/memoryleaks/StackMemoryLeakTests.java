@@ -10,7 +10,8 @@ import org.junit.Assume;
 import static org.junit.Assert.assertEquals;
 
 /**
- * JUnitExt offers two tools for detecting memory leaks.
+ * Examples of asking the framework to track the GC of objects passed into the
+ * test case.
  */
 @SuppressWarnings("ALL")
 public class StackMemoryLeakTests {
