@@ -1,9 +1,15 @@
 
 
 
-- store benchmark results in a circular list
+- store benchmark results
+      circular list or sqlite or json?
+
 - graph results
+      separate main; generate json or html (plugable)
+
 - mark code changes on results
+      use git change log
+      support text/csv change log   (plugable)
 
 
 

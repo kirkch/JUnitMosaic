@@ -131,9 +131,6 @@ class InvokeTestMethod extends Statement {
     private int calculateNumberOfRuns(Generator[] generators) {
         if ( generators.length > 0 ) {
             return testAnnotation.repeat();
-        } else if ( testAnnotation != null && testAnnotation.memCheck() ) {
-            return 2; // we run twice so that the first run can prime the system and avoid jvm caches
-                      // from showing up as leaks; the second run is the real run with memcheck testing
         }
 
         return 1;
