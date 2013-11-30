@@ -34,38 +34,38 @@ values each run, from the generators specified in the @Test annotation.
 
 Example:
 
-@RunWith(JUnitMosaic.class)
-public class StackTest {
-    private final Generator arraySizeGenerator = PrimitiveGenerators.integers(1,100);
-    private final Generator stringsGenerator   = CombinedGenerators.arrays(PrimitiveGenerators.strings(), arraySizeGenerator, String.class);
+    @RunWith(JUnitMosaic.class)
+    public class StackTest {
+        private final Generator arraySizeGenerator = PrimitiveGenerators.integers(1,100);
+        private final Generator stringsGenerator   = CombinedGenerators.arrays(PrimitiveGenerators.strings(), arraySizeGenerator, String.class);
 
-    private Stack stack = new Stack();
-
-
-    @Test(generators={"stringsGenerator"})
-    public void verifyAssumeBehaviour( String[] values ) {
-        pushAll(values);
-
-        popAndAssertAllValues(values);
-    }
+        private Stack stack = new Stack();
 
 
-    private void pushAll(String[] values) {
-        for ( String v : values ) {
-            stack.push(v);
-        }
-    }
+        @Test(generators={"stringsGenerator"})
+        public void verifyAssumeBehaviour( String[] values ) {
+            pushAll(values);
 
-    private void popAndAssertAllValues(String[] values) {
-        assertEquals( values.length, stack.size() );
-
-        for ( int i=values.length-1; i>=0; i-- ) {
-            assertEquals( values[i], stack.pop() );
+            popAndAssertAllValues(values);
         }
 
-        assertEquals( 0, stack.size() );
+
+        private void pushAll(String[] values) {
+            for ( String v : values ) {
+                stack.push(v);
+            }
+        }
+
+        private void popAndAssertAllValues(String[] values) {
+            assertEquals( values.length, stack.size() );
+
+            for ( int i=values.length-1; i>=0; i-- ) {
+                assertEquals( values[i], stack.pop() );
+            }
+
+            assertEquals( 0, stack.size() );
+        }
     }
-}
 
 For situations where the generators create a scenario that is invalid then
 either new generators can be created that avoid it or JUnit's assumeThat mechanism
