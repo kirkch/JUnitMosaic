@@ -25,11 +25,6 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
 
-    static {
-        MemChecker.startMemCheckRegion(false);  // dummy call to bootstrap the MemChecker class before it is needed
-    }
-
-
     private List<FrameworkMethod> list = null;
 
     public JUnitMosaicRunner(Class<?> klass) throws InitializationError {
@@ -98,10 +93,14 @@ class InvokeTestMethod extends Statement {
 
         TestExecutionLock.acquireTestLock(testAnnotation);
 
+        MemChecker memChecker = new MemChecker();
+
         try {
+            int successCount = 0;
+
             for ( int i=0; i<numRuns; i++ ) {
                 ThreadChecker.testAboutToStart(testAnnotation);
-                MemChecker.startMemCheckRegion( isMemCheckEnabled );
+                memChecker.startMemCheckRegion( isMemCheckEnabled );
 
                 Object[] paramValues = generateParameterValues( generators );
 
@@ -109,17 +108,20 @@ class InvokeTestMethod extends Statement {
                     throw new UnsupportedOperationException("@Test(memCheck=true) requires a test method that takes parameters");
                 }
 
-                MemChecker.watchValue( paramValues );
+                memChecker.watchValue( paramValues );
 
                 try {
                     fTestMethod.invokeExplosively(fTarget, paramValues);
+
+                    successCount++;
                 } catch (AssumptionViolatedException e) {
                     // ignore failed assumptions
                 } finally {
                     //noinspection UnusedAssignment
                     paramValues = null;  // makes the param values GC'able
 
-                    MemChecker.endMemCheckRegion();
+                    memChecker.endMemCheckRegion( successCount == numRuns );
+
                     ThreadChecker.testHasFinished(testAnnotation);
                 }
             }

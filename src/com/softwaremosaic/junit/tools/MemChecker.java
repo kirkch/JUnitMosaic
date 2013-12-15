@@ -13,11 +13,11 @@ import java.util.Set;
 @SuppressWarnings({"EmptyCatchBlock", "unchecked"})
 public class MemChecker {
 
-    private static volatile ReferenceQueue  referenceQueue;
-    private static volatile Set<Reference>  memCheckReferences;
+    private ReferenceQueue  referenceQueue;
+    private Set<Reference>  memCheckReferences;
 
 
-    public static void startMemCheckRegion( boolean memCheckEnabled ) {
+    public void startMemCheckRegion( boolean memCheckEnabled ) {
         assert referenceQueue == null : "a new memcheck region should not be started while another is still running";
 
         if ( !memCheckEnabled ) {
@@ -28,7 +28,7 @@ public class MemChecker {
         referenceQueue     = new ReferenceQueue();
     }
 
-    public static void watchValue( Object v ) {
+    public void watchValue( Object v ) {
         if ( referenceQueue == null || v == null ) {
             return;
         }
@@ -48,7 +48,7 @@ public class MemChecker {
         appendObjectToWatchList(v);
     }
 
-    public static void endMemCheckRegion() {
+    public void endMemCheckRegion( boolean successfulRunFlag ) {
         if ( referenceQueue == null ) {
             return;
         }
@@ -60,6 +60,9 @@ public class MemChecker {
         memCheckReferences = null;
 
 
+        if ( !successfulRunFlag ) {
+            return;
+        }
 
         while ( references.size() > 0 ) {
             System.gc();
@@ -75,16 +78,16 @@ public class MemChecker {
                     }
 
                     throw new IllegalStateException( "GC not complete within 5 seconds" );
+                } else {
+                    references.remove(ref);
                 }
-
-                references.remove(ref);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    private static void appendObjectToWatchList( Object v ) {
+    private void appendObjectToWatchList( Object v ) {
         memCheckReferences.add( new WeakReference(v,referenceQueue) );
     }
 

@@ -34,7 +34,7 @@ values each run, from the generators specified in the @Test annotation.
 
 Example:
 
-    @RunWith(JUnitMosaic.class)
+    @RunWith(JUnitMosaicRunner.class)
     public class StackTest {
         private final Generator arraySizeGenerator = PrimitiveGenerators.integers(1,100);
         private final Generator stringsGenerator   = CombinedGenerators.arrays(PrimitiveGenerators.strings(), arraySizeGenerator, String.class);
@@ -117,7 +117,7 @@ compared with previous runs to visualise trends.
 
 
 
-    @RunWith(JUnitMosaic.class)
+    @RunWith(JUnitMosaicRunner.class)
     public class SystemTimeBenchmark {
 
         @Benchmark
@@ -196,7 +196,7 @@ object pushed on to the stack.  Thus the final test after the threads have finis
 that the objects in the stack match the objects reported as having been pushed.
 
 
-    @RunWith(JUnitMosaic.class)
+    @RunWith(JUnitMosaicRunner.class)
     @SuppressWarnings("ALL")
     public class MultiThreadedTest {
 
