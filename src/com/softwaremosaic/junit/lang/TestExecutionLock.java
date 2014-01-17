@@ -30,7 +30,7 @@ public class TestExecutionLock {
     }
 
     public static void releaseBenchmarkLock() {
-        rwLock.writeLock().lock();
+        rwLock.writeLock().unlock();
     }
 
     private static Lock selectTestLock(Test testAnnotation) {

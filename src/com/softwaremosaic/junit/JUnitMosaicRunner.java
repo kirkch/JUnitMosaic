@@ -234,11 +234,11 @@ class InvokeBenchmarkMethod extends Statement {
 
         TestExecutionLock.acquireBenchmarkLock();
 
-        System.out.println( "Benchmark results for: " );
-        System.out.println( "Invoking "+fTestMethod.getMethod().getDeclaringClass().getSimpleName()+"."+fTestMethod.getName() + " (batchCount=" + annotation.batchCount() + ", iterationCount=" + annotation.value() + ", timingMultipler=" + annotation.durationResultMultiplier() + ")" );
-        System.out.println( "    " );
-
         try {
+            System.out.println( "Benchmark results for: " );
+            System.out.println( "Invoking "+fTestMethod.getMethod().getDeclaringClass().getSimpleName()+"."+fTestMethod.getName() + " (batchCount=" + annotation.batchCount() + ", iterationCount=" + annotation.value() + ", timingMultipler=" + annotation.durationResultMultiplier() + ")" );
+            System.out.println( "    " );
+
             for ( int i=0; i<annotation.batchCount()+1; i++ ) {
                 invokeAndReportBatch(i);
             }
