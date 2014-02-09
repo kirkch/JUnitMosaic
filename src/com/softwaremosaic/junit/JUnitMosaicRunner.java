@@ -9,6 +9,8 @@ import com.softwaremosaic.junit.tools.MemChecker;
 import com.softwaremosaic.junit.tools.ThreadChecker;
 import net.java.quickcheck.Generator;
 import org.junit.internal.AssumptionViolatedException;
+import org.junit.runner.Description;
+import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
@@ -63,6 +65,31 @@ public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
         }
     }
 
+    private static final boolean areAssertionsEnabled = detectWhetherAssertionsAreEnabled();
+
+    @Override
+    protected void runChild(FrameworkMethod method, RunNotifier notifier) {
+        Benchmark benchmarkAnnotation = method.getAnnotation(Benchmark.class);
+
+        if ( benchmarkAnnotation == null || !areAssertionsEnabled ) {
+            super.runChild( method, notifier );
+        } else {
+            Description description = Description.createTestDescription(getTestClass().getJavaClass(),
+                testName(method) + " benchmark skipped because assertions are enabled, remove the -ea flag from the java process",
+                method.getAnnotations());
+
+            notifier.fireTestIgnored( description );
+        }
+    }
+
+    @SuppressWarnings({"ConstantConditions", "AssertWithSideEffects", "UnusedAssignment"})
+    private static boolean detectWhetherAssertionsAreEnabled() {
+        boolean flag = false;
+
+        assert (flag = true);
+
+        return flag;
+    }
 }
 
 
@@ -262,7 +289,7 @@ class InvokeBenchmarkMethod extends Statement {
                 System.out.println( "ns per " + annotation.units() );
             } else {
                 System.out.print( String.format("%.2f",perCallMillis)  );
-                System.out.print( "ms per " + annotation.units() );
+                System.out.println( "ms per " + annotation.units() );
             }
         }
     }
