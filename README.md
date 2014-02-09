@@ -153,8 +153,8 @@ compared with previous runs to visualise trends.
 
     }
 
-The results of the run are currently printed to the console, which is useful for point
-comparisons during the development cycle.
+The results of the run are currently printed to the console, assuming that
+you did *not* enable assertions:
 
 
     Benchmark results for:
@@ -176,6 +176,32 @@ per line of text processed.
 
 ## Testing Concurrent Code
 
+### Spin Locks
+
+Concurrent tests using JUnit often devolve into calls to Thread.sleep.  This has a few problems, most
+notably that the tests become both slow and fragile.  Slow because the thread has gone to sleep, and
+fragile due to race conditions where the sleep may not be long enough in some circumstances.  Which usually
+results in the sleep time being increased, and the test getting slower until the test is run on another
+machine (usually the build server) where it starts failing intermittently.  Joy.
+
+For situations where the test will usually complete in a few milliseconds, and no callback exists then
+a simple spin lock may be used to wait for the async event to occur.
+
+
+    JUnitMosaic.assertEventually( new Predicate() {...} );
+    JUnitMosaic.spinUntilTrue( new Callbable<Boolean>() {...} );
+
+When waiting for an object to become GC'd, the following helper can be used:
+
+    JUnitMosic.spinUntilReleased( weakRef );
+
+The advantage of this approach is that the moment that the async condition becomes true, then the
+test will move on.  This keeps the test fast and responsive.  It should also be noted that if
+the condition never happens, then the test will time out (3 seconds by default, but can be specified).
+3 seconds is usually plenty for small and fast unit tests; obviously integration and system tests
+would require much longer.
+
+
 ### Stochastic Testing
 
 Spin up n threads that perform the same step with random data against the concurrent data structure.  After
@@ -188,7 +214,7 @@ be the value returned from the last call to 'step()' from that thread.  The Asse
 The code that starts the threads, makes the calls to 'step()' and waits for all of the threads to complete
 is:
 
-    Assert.multiThreadedAssert(new AssertJob<List<String>>() {...})
+    JUnitMosaic.multiThreadedAssert(new AssertJob<List<String>>() {...})
 
 Its result is a list of the state of each of the threads used in the test.  The test method is then free
 to process the results in any way that is required.  In this example the state is a collection of every
@@ -207,7 +233,7 @@ that the objects in the stack match the objects reported as having been pushed.
         public void concurrentPushPopTest() {
             final List<String> stack = Collections.synchronizedList(new ArrayList<String>());
 
-            List<List<String>> perThreadResults = Assert.multiThreadedAssert(new AssertJob<List<String>>() {
+            List<List<String>> perThreadResults = JUnitMosaic.multiThreadedAssert(new AssertJob<List<String>>() {
                 public List<String> step( List<String> expectedStateSoFar ) {
                     if ( expectedStateSoFar == null ) {
                         expectedStateSoFar = new ArrayList<String>();
