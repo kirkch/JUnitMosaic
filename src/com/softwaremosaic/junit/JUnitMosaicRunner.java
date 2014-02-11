@@ -75,9 +75,11 @@ public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
             super.runChild( method, notifier );
         } else {
             Description description = Description.createTestDescription(getTestClass().getJavaClass(),
-                testName(method) + " benchmark skipped because assertions are enabled, remove the -ea flag from the java process",
+                testName(method),
                 method.getAnnotations());
 
+
+            System.out.println(description.getDisplayName()+" benchmark skipped because assertions are enabled, remove the -ea flag from the java process");
             notifier.fireTestIgnored( description );
         }
     }

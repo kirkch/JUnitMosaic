@@ -34,7 +34,7 @@ public class TestExecutionLock {
     }
 
     private static Lock selectTestLock(Test testAnnotation) {
-        if ( testAnnotation.threadCheck() ) {
+        if ( testAnnotation != null && testAnnotation.threadCheck() ) {
             return rwLock.writeLock();
         } else {
             return rwLock.readLock();

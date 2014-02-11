@@ -15,7 +15,7 @@ public class ThreadChecker {
     private static Set<String> initialThreadNames = new HashSet<String>();
 
     public static void testAboutToStart( Test testAnnotation ) {
-        if ( !testAnnotation.threadCheck() ) {
+        if ( testAnnotation == null || !testAnnotation.threadCheck() ) {
             return;
         }
 
@@ -25,7 +25,7 @@ public class ThreadChecker {
     }
 
     public static void testHasFinished( Test testAnnotation ) {
-        if ( !testAnnotation.threadCheck() ) {
+        if ( testAnnotation == null || !testAnnotation.threadCheck() ) {
             return;
         }
 
