@@ -11,6 +11,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
@@ -153,6 +154,23 @@ public class JUnitMosaic extends org.junit.Assert {
      */
     public static void spinUntilTrue( Callable<Boolean> predicate ) {
         spinUntilTrue( 3000, predicate );
+    }
+
+    /**
+     * Block the current thread until the two arguements become equal.
+     */
+    public static <T> void spinUntilEquals( final T a, final T b) {
+        try {
+            spinUntilTrue( 3000, new Callable<Boolean>() {
+                public Boolean call() throws Exception {
+                    return Objects.deepEquals( a, b );
+                }
+            } );
+        } catch ( IllegalStateException e ) {
+            if ( e.getMessage().equals("Timeout") ) {
+                fail( a + " != " + b);
+            }
+        }
     }
 
     /**
