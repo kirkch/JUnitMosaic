@@ -157,6 +157,13 @@ public class JUnitMosaic extends org.junit.Assert {
     }
 
     /**
+     * Block the current thread until the specified condition is true.
+     */
+    public static void spinUntilTrue( String errorMessage, Callable<Boolean> predicate ) {
+        spinUntilTrue( errorMessage, 3000, predicate );
+    }
+
+    /**
      * Block the current thread until the two arguements become equal.
      */
     public static <T> void spinUntilEquals( final T a, final T b) {
@@ -177,13 +184,20 @@ public class JUnitMosaic extends org.junit.Assert {
      * Block the current thread until the specified condition is true.
      */
     public static void spinUntilTrue( long timeoutMillis, Callable<Boolean> predicate ) {
+        spinUntilTrue( "Timedout after " + timeoutMillis + "ms", timeoutMillis, predicate );
+    }
+
+    /**
+     * Block the current thread until the specified condition is true.
+     */
+    public static void spinUntilTrue( String errorMessage, long timeoutMillis, Callable<Boolean> predicate ) {
         long startMillis = System.currentTimeMillis();
 
         while ( !callPredicate(predicate) ) {
             long durationMillis = System.currentTimeMillis() - startMillis;
 
             if ( durationMillis > timeoutMillis ) {
-                throw new IllegalStateException( "Timeout" );
+                throw new IllegalStateException( errorMessage );
             }
 
             Thread.yield();
