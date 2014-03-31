@@ -174,9 +174,9 @@ public class JUnitMosaic extends org.junit.Assert {
                 }
             } );
         } catch ( IllegalStateException e ) {
-            if ( e.getMessage().equals("Timeout") ) {
+//            if ( e.getMessage().equals("Timeout") ) {
                 fail( a + " != " + b);
-            }
+//            }
         }
     }
 
