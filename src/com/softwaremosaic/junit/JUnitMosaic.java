@@ -9,6 +9,7 @@ import net.java.quickcheck.generator.PrimitiveGenerators;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -170,13 +171,16 @@ public class JUnitMosaic extends org.junit.Assert {
         try {
             spinUntilTrue( 3000, new Callable<Boolean>() {
                 public Boolean call() throws Exception {
-                    return Objects.deepEquals( a, b );
+                    try {
+                        return Objects.deepEquals( a, b );
+                    } catch ( ConcurrentModificationException ex ) {
+                        // ignore concurrent modification exceptions and try again
+                        return false;
+                    }
                 }
             } );
         } catch ( IllegalStateException e ) {
-//            if ( e.getMessage().equals("Timeout") ) {
-                fail( a + " != " + b);
-//            }
+            fail( a + " != " + b);
         }
     }
 
