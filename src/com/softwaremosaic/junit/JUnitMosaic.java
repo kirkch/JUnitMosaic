@@ -216,9 +216,19 @@ public class JUnitMosaic extends org.junit.Assert {
      * method will error.
      */
     public static void spinUntilReleased( final Reference ref ) {
+        spinUntilReleased( "value was not garbage collected", ref );
+    }
+
+    /**
+     * Tool for detecting memory links. When an object should be GC'd, wrap it with a WeakReference and then trigger
+     * any code necessary to break any strong references. Once done call this method to wait for the GC to release
+     * the object. If it does not release then the weak reference will hold on to the underlying object and this
+     * method will error.
+     */
+    public static void spinUntilReleased( final String msg, final Reference ref ) {
         Runtime.getRuntime().gc();
 
-        spinUntilTrue( new Callable<Boolean>() {
+        spinUntilTrue( msg,  new Callable<Boolean>() {
             public Boolean call() {
                 return ref.get() == null;
             }
