@@ -5,6 +5,7 @@ import com.softwaremosaic.junit.tools.AssertJob;
 import com.softwaremosaic.junit.tools.ConcurrentAsserter;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
+import org.junit.ComparisonFailure;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -180,7 +181,7 @@ public class JUnitMosaic extends org.junit.Assert {
                 }
             } );
         } catch ( IllegalStateException e ) {
-            fail( a + " != " + b);
+            throw new ComparisonFailure("a != b after 3s", Objects.toString(a), Objects.toString(b));
         }
     }
 
