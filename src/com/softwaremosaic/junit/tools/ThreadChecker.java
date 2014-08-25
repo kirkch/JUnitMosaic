@@ -58,6 +58,8 @@ public class ThreadChecker {
             threadNames.add(t.getName());
         }
 
+        threadNames.add( "process reaper" );   // created by use of java.lang.Process - it is a daemon that does not shutdown
+
         return threadNames;
     }
 }
