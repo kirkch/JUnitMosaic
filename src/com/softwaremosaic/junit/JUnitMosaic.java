@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -306,6 +307,28 @@ public class JUnitMosaic extends org.junit.Assert {
                 workingSetB,
                 inBoth
         );
+    }
+
+    /**
+     * Assert that two lists of strings are equal.  Written to take advantage of IntelliJ's
+     * text comparison display.
+     */
+    public static void assertParagraphs( List<String> expected, List<String> actual ) {
+        String a = joinParagraph(expected);
+        String b = joinParagraph(actual);
+
+        assertEquals( a, b );
+    }
+
+
+    private static String joinParagraph( List<String> paragraph ) {
+        StringJoiner joiner = new StringJoiner("\n");
+
+        for ( String s : paragraph ) {
+            joiner.add( s );
+        }
+
+        return joiner.toString();
     }
 
 
