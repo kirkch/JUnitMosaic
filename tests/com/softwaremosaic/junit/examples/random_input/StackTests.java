@@ -20,8 +20,8 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings("ALL")
 public class StackTests {
 
-    private final Generator arraySizeGenerator = PrimitiveGenerators.integers(1,100);
-    private final Generator stringsGenerator   = CombinedGenerators.arrays(PrimitiveGenerators.strings(), arraySizeGenerator, String.class);
+    private final Generator<Integer>  arraySizeGenerator = PrimitiveGenerators.integers(1,100);
+    private final Generator<String[]> stringsGenerator   = CombinedGenerators.arrays(PrimitiveGenerators.strings(), arraySizeGenerator, String.class);
 
 
     private BuggyStack stack = new BuggyStack();

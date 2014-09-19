@@ -23,7 +23,7 @@ public class CountThreadsTests {
     public void startAThread_expectOneThreadFromCount() {
         startChildThread();
 
-        spinUntilTrue(new Callable() {
+        spinUntilTrue(new Callable<Boolean>() {
             public Boolean call() {
                 return countThreads(threadPrefix) > 0;
             }
@@ -37,7 +37,7 @@ public class CountThreadsTests {
         startChildThread();
         startChildThread();
 
-        spinUntilTrue(new Callable() {
+        spinUntilTrue(new Callable<Boolean>() {
             public Boolean call() {
                 return countThreads(threadPrefix) > 1;
             }

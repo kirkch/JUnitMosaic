@@ -17,7 +17,7 @@ public class ManualGCDetectionTests {
     @Test
     public void detectThatAObjectWasGCd() {
         Object o = new Object();
-        Reference ref = new WeakReference( o );
+        Reference<Object> ref = new WeakReference<Object>( o );
 
         o = null;
 
@@ -27,7 +27,7 @@ public class ManualGCDetectionTests {
     @Test
     public void detectThatAObjectIsNotGCable() {
         Object o = new Object();
-        Reference ref = new WeakReference( o );
+        Reference<Object> ref = new WeakReference<Object>( o );
 
         try {
             spinUntilReleased(ref);

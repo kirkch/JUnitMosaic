@@ -14,13 +14,14 @@ import static com.softwaremosaic.junit.JUnitMosaic.*;
  */
 public class SetCompareTests {
 
-    private <T> Set asSet( T...elements ) {
+    @SafeVarargs
+    private final <T> Set<T> asSet( T... elements ) {
         return new HashSet<T>( Arrays.asList(elements) );
     }
 
     @Test
     public void compareEmptySetToNullSet_expectEmptyResults() {
-        SetComparison r = compare( asSet(), null );
+        SetComparison<Object> r = compare( asSet(), null );
 
         assertEquals( 0, r.inBothSets.size() );
         assertEquals( 0, r.onlyInSetA.size() );
@@ -38,7 +39,7 @@ public class SetCompareTests {
 
     @Test
     public void compare_1Vnull() {
-        SetComparison r = compare( asSet(1), null );
+        SetComparison<Integer> r = compare( asSet(1), null );
 
         assertEquals( "[1]", r.onlyInSetA.toString() );
         assertEquals( "[]",  r.onlyInSetB.toString() );
@@ -47,7 +48,7 @@ public class SetCompareTests {
 
     @Test
     public void compare_1Vempty() {
-        SetComparison r = compare( asSet(1), new HashSet() );
+        SetComparison<Integer> r = compare( asSet(1), new HashSet<Integer>() );
 
         assertEquals( "[1]", r.onlyInSetA.toString() );
         assertEquals( "[]",  r.onlyInSetB.toString() );
@@ -56,7 +57,7 @@ public class SetCompareTests {
 
     @Test
     public void compare_1V1() {
-        SetComparison r = compare( asSet(1), asSet(1) );
+        SetComparison<Integer> r = compare( asSet(1), asSet(1) );
 
         assertEquals( "[]",  r.onlyInSetA.toString() );
         assertEquals( "[]",  r.onlyInSetB.toString() );
@@ -65,7 +66,7 @@ public class SetCompareTests {
 
     @Test
     public void compare_1V0() {
-        SetComparison r = compare( asSet(1), asSet(0) );
+        SetComparison<Integer> r = compare( asSet(1), asSet(0) );
 
         assertEquals( "[1]",  r.onlyInSetA.toString() );
         assertEquals( "[0]",  r.onlyInSetB.toString() );
@@ -74,7 +75,7 @@ public class SetCompareTests {
 
     @Test
     public void compare_12V1() {
-        SetComparison r = compare( asSet(1,2), asSet(1) );
+        SetComparison<Integer> r = compare( asSet(1,2), asSet(1) );
 
         assertEquals( "[2]",  r.onlyInSetA.toString() );
         assertEquals( "[]",  r.onlyInSetB.toString() );
@@ -83,7 +84,7 @@ public class SetCompareTests {
 
     @Test
     public void compare_1V12() {
-        SetComparison r = compare( asSet(1), asSet(1,2) );
+        SetComparison<Integer> r = compare( asSet(1), asSet(1,2) );
 
         assertEquals( "[]",  r.onlyInSetA.toString() );
         assertEquals( "[2]",  r.onlyInSetB.toString() );
