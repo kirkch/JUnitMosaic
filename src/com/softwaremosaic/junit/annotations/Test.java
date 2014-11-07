@@ -34,6 +34,12 @@ public @interface Test {
      */
     String[] generators() default {};
 
+    /**
+     * The random generator seed to use.  The default value is Long.MIN_VALUE, which is a
+     * reserved value that will be replaced with the result of a call to System.currentTimeMillis;
+     * thus randomising the seed.
+     */
+    long seed() default Long.MIN_VALUE;
 
     /**
      * Ensures that any threads started during the test are shutdown by

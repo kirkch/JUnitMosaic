@@ -1,13 +1,15 @@
 package com.softwaremosaic.junit;
 
-
-
 import com.softwaremosaic.junit.annotations.Benchmark;
 import com.softwaremosaic.junit.annotations.Test;
 import com.softwaremosaic.junit.lang.TestExecutionLock;
+import com.softwaremosaic.junit.quickcheck.FloatGenerator;
+import com.softwaremosaic.junit.quickcheck.ShortGenerator;
 import com.softwaremosaic.junit.tools.MemChecker;
 import com.softwaremosaic.junit.tools.ThreadChecker;
 import net.java.quickcheck.Generator;
+import net.java.quickcheck.generator.PrimitiveGenerators;
+import net.java.quickcheck.generator.distribution.RandomConfiguration;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.runner.Description;
 import org.junit.runner.notification.RunNotifier;
@@ -15,11 +17,15 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
+import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 
 /**
  *
@@ -112,8 +118,6 @@ class InvokeTestMethod extends Statement {
 
     @Override
     public void evaluate() throws Throwable {
-        verifyParameters();
-
         Generator[] generators        = fetchGenerators();
         int         numRuns           = calculateNumberOfRuns(generators);
         boolean     isMemCheckEnabled = isMemCheckEnabled();
@@ -131,6 +135,10 @@ class InvokeTestMethod extends Statement {
                 ThreadChecker.testAboutToStart(testAnnotation);
                 memChecker.startMemCheckRegion( isMemCheckEnabled );
 
+                long seed = selectSeed();
+                RandomConfiguration.setSeed(seed);
+
+
                 Object[] paramValues = generateParameterValues( generators );
 
                 if ( isMemCheckEnabled && paramValues.length == 0 ) {
@@ -145,6 +153,18 @@ class InvokeTestMethod extends Statement {
                     successCount++;
                 } catch (AssumptionViolatedException e) {
                     // ignore failed assumptions
+                } catch (Throwable ex) {
+                    if ( generators.length != 0 ) {
+                        System.err.println( "Test failed with: " + ex.getClass().getName() + "  " + ex.getMessage() );
+                        System.err.println( "To repeat the test with the same values from the random value generators, specify @Test(seed="+seed+")" );
+
+                        System.err.println( "The generated values used for this test run were:" );
+                        for ( int j=0; j<paramValues.length; j++ ) {
+                            System.err.println( "  " + j + ": '"+paramValues[j]+"'" );
+                        }
+                    }
+
+                    rethrowException(ex);
                 } finally {
                     //noinspection UnusedAssignment
                     paramValues = null;  // makes the param values GC'able
@@ -156,6 +176,32 @@ class InvokeTestMethod extends Statement {
             }
         } finally {
             TestExecutionLock.releaseTestLock( testAnnotation );
+        }
+    }
+
+    private long selectSeed() {
+        if ( testAnnotation == null || testAnnotation.seed() == Long.MIN_VALUE ) {
+            return System.currentTimeMillis();
+        } else {
+            return testAnnotation.seed();
+        }
+    }
+
+    private void rethrowException( Throwable ex ) {
+        Unsafe unsafe = fetchUnsafe();
+
+        unsafe.throwException( ex );
+    }
+
+    private static Unsafe fetchUnsafe() {
+        try {
+            Field field = Unsafe.class.getDeclaredField( "theUnsafe" );
+
+            field.setAccessible(true);
+
+            return (Unsafe) field.get(null);
+        } catch ( Throwable e ) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -171,40 +217,87 @@ class InvokeTestMethod extends Statement {
         return testAnnotation != null && testAnnotation.memCheck();
     }
 
-    private void verifyParameters() {
-        int numParams     = fTestMethod.getMethod().getParameterTypes().length;
-        int numGenerators = testAnnotation == null ? 0 : testAnnotation.generators().length;
-
-        if ( numGenerators != numParams ) {
-            String msg = String.format("Test method has %s parameters declared, and %s generators.  There should be exactly one generator per parameter.", numParams, numGenerators);
-
-            throw new IllegalArgumentException(msg);
-        }
-    }
-
     private Generator[] fetchGenerators() {
         if ( testAnnotation == null )  {
             return new Generator[] {};
         }
 
         String[]    generatorFieldNames = testAnnotation.generators();
+        Class[]     paramTypes          = fTestMethod.getMethod().getParameterTypes();
         int         numGenerators       = generatorFieldNames.length;
-        Generator[] generators          = new Generator[numGenerators];
+        int         numParams           = paramTypes.length;
+        Generator[] generators          = new Generator[numParams];
 
-        for ( int i=0; i<numGenerators; i++ ) {
-            String fieldName = generatorFieldNames[i];
+        for ( int i=0; i<numParams; i++ ) {
+            Class  paramType             = paramTypes[i];
+            String generatorFieldNameNbl = numGenerators > i ? generatorFieldNames[i] : null;
 
-            try {
-                Field field = locateMandatoryField(fieldName);
-                field.setAccessible(true);
-
-                generators[i] = (Generator) field.get(fTarget);
-            } catch (Exception e) {
-                throw new IllegalArgumentException( "Unable to retrieve generator from field '"+fieldName+"'", e );
-            }
+            generators[i] = selectGeneratorFor( paramType, generatorFieldNameNbl );
         }
 
         return generators;
+    }
+
+    private Generator selectGeneratorFor( Class paramType, String generatorFieldNameNbl ) {
+        if ( generatorFieldNameNbl == null ) {
+            return fetchDefaultGeneratorForType( paramType );
+        } else {
+            return fetchGeneratorByFieldName( generatorFieldNameNbl );
+        }
+    }
+
+
+    private static final Map<Class,Generator> DEFAULT_GENERATORS = new HashMap<>();
+
+    static {
+        DEFAULT_GENERATORS.put( Boolean.class, PrimitiveGenerators.booleans() );
+        DEFAULT_GENERATORS.put( Boolean.TYPE, PrimitiveGenerators.booleans() );
+
+        DEFAULT_GENERATORS.put( Byte.class, PrimitiveGenerators.bytes() );
+        DEFAULT_GENERATORS.put( Byte.TYPE, PrimitiveGenerators.bytes() );
+
+        DEFAULT_GENERATORS.put( Character.class, PrimitiveGenerators.characters() );
+        DEFAULT_GENERATORS.put( Character.TYPE, PrimitiveGenerators.characters() );
+
+        DEFAULT_GENERATORS.put( Short.class, new ShortGenerator() );
+        DEFAULT_GENERATORS.put( Short.TYPE, new ShortGenerator() );
+
+        DEFAULT_GENERATORS.put( Integer.class, PrimitiveGenerators.integers() );
+        DEFAULT_GENERATORS.put( Integer.TYPE, PrimitiveGenerators.integers() );
+
+        DEFAULT_GENERATORS.put( Long.class, PrimitiveGenerators.longs() );
+        DEFAULT_GENERATORS.put( Long.TYPE, PrimitiveGenerators.longs() );
+
+        DEFAULT_GENERATORS.put( Float.class, new FloatGenerator() );
+        DEFAULT_GENERATORS.put( Float.TYPE, new FloatGenerator() );
+
+        DEFAULT_GENERATORS.put( Double.class, PrimitiveGenerators.doubles() );
+        DEFAULT_GENERATORS.put( Double.TYPE, PrimitiveGenerators.doubles() );
+
+
+        DEFAULT_GENERATORS.put( String.class, PrimitiveGenerators.strings() );
+    }
+
+
+    private Generator fetchDefaultGeneratorForType( Class paramType ) {
+        Generator g = DEFAULT_GENERATORS.get( paramType );
+
+        if ( g == null ) {
+            throw new IllegalStateException( "No generator found for parameter type '"+paramType.getName()+"'.  Generators can be declared as fields on the test class, and referenced via @Test(generators={\"fieldName\")." );
+        }
+
+        return g;
+    }
+
+    private Generator fetchGeneratorByFieldName( String generatorFieldName ) {
+        try {
+            Field field = locateMandatoryField(generatorFieldName);
+            field.setAccessible(true);
+
+            return (Generator) field.get(fTarget);
+        } catch (Exception e) {
+            throw new IllegalArgumentException( "Unable to retrieve generator from field '"+generatorFieldName+"'", e );
+        }
     }
 
     private Object[] generateParameterValues(Generator[] generators) {

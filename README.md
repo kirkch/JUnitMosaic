@@ -82,6 +82,12 @@ will never need to store more than 10 values and so this test will pass.
         popAndAssertAllValues(values);
     }
 
+### Random Number Seed
+
+When an error occurs using QuickCheck, the random values that were generated will be printed to
+stderr along with the seed that was used at the start of the test.  By default the seed will
+be set to System.currentTimeMillis, however this will give different random parameters each time
+the test is run.  To make the test repeatable, specify the seed via the test annoation @Test(seed=1234).
 
 
 ## Mem Check
