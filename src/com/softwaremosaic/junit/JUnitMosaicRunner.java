@@ -3,12 +3,10 @@ package com.softwaremosaic.junit;
 import com.softwaremosaic.junit.annotations.Benchmark;
 import com.softwaremosaic.junit.annotations.Test;
 import com.softwaremosaic.junit.lang.TestExecutionLock;
-import com.softwaremosaic.junit.quickcheck.FloatGenerator;
-import com.softwaremosaic.junit.quickcheck.ShortGenerator;
+import com.softwaremosaic.junit.quickcheck.GeneratorFactory;
 import com.softwaremosaic.junit.tools.MemChecker;
 import com.softwaremosaic.junit.tools.ThreadChecker;
 import net.java.quickcheck.Generator;
-import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.distribution.RandomConfiguration;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.runner.Description;
@@ -22,9 +20,7 @@ import sun.misc.Unsafe;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -121,8 +117,6 @@ class InvokeTestMethod extends Statement {
         Generator[] generators        = fetchGenerators();
         int         numRuns           = calculateNumberOfRuns(generators);
         boolean     isMemCheckEnabled = isMemCheckEnabled();
-
-        // TODO default generator values
 
         TestExecutionLock.acquireTestLock(testAnnotation);
 
@@ -247,40 +241,11 @@ class InvokeTestMethod extends Statement {
     }
 
 
-    private static final Map<Class,Generator> DEFAULT_GENERATORS = new HashMap<>();
 
-    static {
-        DEFAULT_GENERATORS.put( Boolean.class, PrimitiveGenerators.booleans() );
-        DEFAULT_GENERATORS.put( Boolean.TYPE, PrimitiveGenerators.booleans() );
-
-        DEFAULT_GENERATORS.put( Byte.class, PrimitiveGenerators.bytes() );
-        DEFAULT_GENERATORS.put( Byte.TYPE, PrimitiveGenerators.bytes() );
-
-        DEFAULT_GENERATORS.put( Character.class, PrimitiveGenerators.characters() );
-        DEFAULT_GENERATORS.put( Character.TYPE, PrimitiveGenerators.characters() );
-
-        DEFAULT_GENERATORS.put( Short.class, new ShortGenerator() );
-        DEFAULT_GENERATORS.put( Short.TYPE, new ShortGenerator() );
-
-        DEFAULT_GENERATORS.put( Integer.class, PrimitiveGenerators.integers() );
-        DEFAULT_GENERATORS.put( Integer.TYPE, PrimitiveGenerators.integers() );
-
-        DEFAULT_GENERATORS.put( Long.class, PrimitiveGenerators.longs() );
-        DEFAULT_GENERATORS.put( Long.TYPE, PrimitiveGenerators.longs() );
-
-        DEFAULT_GENERATORS.put( Float.class, new FloatGenerator() );
-        DEFAULT_GENERATORS.put( Float.TYPE, new FloatGenerator() );
-
-        DEFAULT_GENERATORS.put( Double.class, PrimitiveGenerators.doubles() );
-        DEFAULT_GENERATORS.put( Double.TYPE, PrimitiveGenerators.doubles() );
-
-
-        DEFAULT_GENERATORS.put( String.class, PrimitiveGenerators.strings() );
-    }
 
 
     private Generator fetchDefaultGeneratorForType( Class paramType ) {
-        Generator g = DEFAULT_GENERATORS.get( paramType );
+        Generator g = new GeneratorFactory().newGeneratorFor( paramType );
 
         if ( g == null ) {
             throw new IllegalStateException( "No generator found for parameter type '"+paramType.getName()+"'.  Generators can be declared as fields on the test class, and referenced via @Test(generators={\"fieldName\")." );

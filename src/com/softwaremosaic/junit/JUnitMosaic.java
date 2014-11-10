@@ -6,6 +6,8 @@ import com.softwaremosaic.junit.tools.ConcurrentAsserter;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import org.junit.ComparisonFailure;
+import org.junit.internal.ArrayComparisonFailure;
+import org.junit.internal.ExactComparisonCriteria;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -319,6 +321,15 @@ public class JUnitMosaic extends org.junit.Assert {
 
         assertEquals( a, b );
     }
+
+
+    /**
+     * Uses reflection to support primitive arrays.
+     */
+    public static void assertArrayEquals(Object expecteds, Object actuals) throws ArrayComparisonFailure {
+        new ExactComparisonCriteria().arrayEquals( "",  expecteds, actuals );
+    }
+
 
 
     private static String joinParagraph( List<String> paragraph ) {
