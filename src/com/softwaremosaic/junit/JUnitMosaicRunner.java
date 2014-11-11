@@ -150,7 +150,7 @@ class InvokeTestMethod extends Statement {
                 } catch (Throwable ex) {
                     if ( generators.length != 0 ) {
                         System.err.println( "Test failed with: " + ex.getClass().getName() + "  " + ex.getMessage() );
-                        System.err.println( "To repeat the test with the same values from the random value generators, specify @Test(seed="+seed+")" );
+                        System.err.println( "To repeat the test with the same values from the random value generators, specify @Test(seed="+seed+"L)" );
 
                         System.err.println( "The generated values used for this test run were:" );
                         for ( int j=0; j<paramValues.length; j++ ) {
