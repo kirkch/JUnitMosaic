@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 /**
  *
  */
+@SuppressWarnings("unchecked")
 @RunWith(JUnitMosaicRunner.class)
 public class QuickCheckTests {
 

@@ -29,6 +29,7 @@ public class ArrayGenerator<T> implements Generator {
 //        this( minLength, maxLength, Distribution.UNIFORM);
 //    }
 
+    @SuppressWarnings("unchecked")
     public ArrayGenerator( int minLength, int maxLength, Class type, Distribution dist, GeneratorFactory factory ) {
         Assert.lessOrEqual( maxLength, minLength, "min" );
         Assert.notNull(dist, "dist");
@@ -36,7 +37,7 @@ public class ArrayGenerator<T> implements Generator {
         this.minLength              = minLength;
         this.maxLength              = maxLength;
         this.distribution           = dist;
-        this.type                   = type;
+        this.type                   = (Class<T>) type;
         this.childGeneratorsFactory = factory;
     }
 

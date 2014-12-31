@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.unmodifiableSet;
 
@@ -169,14 +170,19 @@ public class JUnitMosaic extends org.junit.Assert {
     }
 
     /**
-     * Block the current thread until the two arguements become equal.
+     * Block the current thread until the two arguments become equal.
      */
-    public static <T> void spinUntilEquals( final T a, final T b) {
+    public static <T> void spinUntilEquals( final T expected, final Callable<T> fetcher ) {
+        final AtomicReference<T> lastResult = new AtomicReference<>();
+
         try {
-            spinUntilTrue( 3000, new Callable<Boolean>() {
+            spinUntilTrue( 9000, new Callable<Boolean>() {
                 public Boolean call() throws Exception {
                     try {
-                        return Objects.deepEquals( a, b );
+                        T b = fetcher.call();
+                        lastResult.set( b );
+
+                        return Objects.deepEquals( expected, b );
                     } catch ( ConcurrentModificationException ex ) {
                         // ignore concurrent modification exceptions and try again
                         return false;
@@ -184,7 +190,7 @@ public class JUnitMosaic extends org.junit.Assert {
                 }
             } );
         } catch ( IllegalStateException e ) {
-            throw new ComparisonFailure("a != b after 3s", Objects.toString(a), Objects.toString(b));
+            throw new ComparisonFailure("a != b after 3s", Objects.toString(expected), Objects.toString(lastResult.get()));
         }
     }
 
