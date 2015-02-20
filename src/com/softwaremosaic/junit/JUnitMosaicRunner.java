@@ -9,6 +9,7 @@ import com.softwaremosaic.junit.tools.ThreadChecker;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.distribution.RandomConfiguration;
 import org.junit.internal.AssumptionViolatedException;
+import org.junit.internal.runners.model.MultipleFailureException;
 import org.junit.runner.Description;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -32,7 +33,7 @@ public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
     private List<FrameworkMethod> list = null;
 
     public JUnitMosaicRunner(Class<?> klass) throws InitializationError {
-        super(klass);
+        super( klass );
     }
 
     @Override
@@ -50,6 +51,99 @@ public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
 
         return list;
     }
+
+    @Override
+    protected Statement withBefores(final FrameworkMethod method, Object target,
+                                    Statement statement) {
+        final Statement withBefores = super.withBefores( method, target, statement );
+
+        return new Statement() {
+            public void evaluate() throws Throwable {
+                final ExceptionCollector exceptionCollector = new ExceptionCollector();
+                final Test               testAnnotation = method.getAnnotation(Test.class);
+
+                if  ( testAnnotation != null ) {
+                    exceptionCollector.invokeAndCaptureException( new FunctionS0() {
+                        @Override
+                        public void invoke() throws Throwable {
+                            TestExecutionLock.acquireTestLock( testAnnotation );
+                        }
+                    });
+
+                    exceptionCollector.invokeAndCaptureException( new FunctionS0() {
+                        @Override
+                        public void invoke() throws Throwable {
+                            ThreadChecker.testAboutToStart( testAnnotation );
+                        }
+                    });
+
+
+                    exceptionCollector.throwIfAnyExceptionsWereCollected();
+                    withBefores.evaluate();
+                }
+            }
+        };
+    }
+
+    @Override
+    protected Statement withAfters(final FrameworkMethod method, Object target,
+                                   Statement statement) {
+        final Statement withAfters = super.withAfters( method, target, statement );
+
+        return new Statement() {
+            public void evaluate() throws Throwable {
+                final ExceptionCollector exceptionCollector = new ExceptionCollector();
+                final Test               testAnnotation = method.getAnnotation(Test.class);
+
+                if ( testAnnotation != null ) {
+                    exceptionCollector.invokeAndCaptureException( new FunctionS0() {
+                        @Override
+                        public void invoke() throws Throwable {
+                            withAfters.evaluate();
+                        }
+                    } );
+
+                    exceptionCollector.invokeAndCaptureException( new FunctionS0() {
+                        @Override
+                        public void invoke() throws Throwable {
+                            ThreadChecker.testHasFinished( testAnnotation );
+                        }
+                    } );
+
+                    exceptionCollector.invokeAndCaptureException( new FunctionS0() {
+                        @Override
+                        public void invoke() throws Throwable {
+                            TestExecutionLock.releaseTestLock( testAnnotation );
+                        }
+                    } );
+
+                    exceptionCollector.throwIfAnyExceptionsWereCollected();
+                }
+
+            }
+        };
+    }
+
+    private static interface FunctionS0 {
+        public void invoke() throws Throwable;
+    }
+
+    private static class ExceptionCollector {
+        private List<Throwable> errors = new ArrayList<Throwable>();
+
+        public void invokeAndCaptureException( FunctionS0 f ) {
+            try {
+                f.invoke();
+            } catch ( Throwable ex ) {
+                errors.add(ex);
+            }
+        }
+
+        public void throwIfAnyExceptionsWereCollected() throws Throwable {
+            MultipleFailureException.assertEmpty( errors );
+        }
+    }
+
 
     @Override
     protected void validateTestMethods(List<Throwable> errors) {}
@@ -118,7 +212,6 @@ class InvokeTestMethod extends Statement {
         int         numRuns           = calculateNumberOfRuns(generators);
         boolean     isMemCheckEnabled = isMemCheckEnabled();
 
-        TestExecutionLock.acquireTestLock(testAnnotation);
 
         MemChecker memChecker = new MemChecker();
 
@@ -126,7 +219,6 @@ class InvokeTestMethod extends Statement {
             int successCount = 0;
 
             for ( int i=0; i<numRuns; i++ ) {
-                ThreadChecker.testAboutToStart(testAnnotation);
                 memChecker.startMemCheckRegion( isMemCheckEnabled );
 
                 long seed = selectSeed();
@@ -164,12 +256,10 @@ class InvokeTestMethod extends Statement {
                     paramValues = null;  // makes the param values GC'able
 
                     memChecker.endMemCheckRegion( successCount == numRuns );
-
-                    ThreadChecker.testHasFinished(testAnnotation);
                 }
             }
         } finally {
-            TestExecutionLock.releaseTestLock( testAnnotation );
+
         }
     }
 
