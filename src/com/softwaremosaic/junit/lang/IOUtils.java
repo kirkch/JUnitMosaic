@@ -7,7 +7,6 @@ import java.io.*;
  */
 public class IOUtils {
 
-
     @SuppressWarnings("unchecked")
     public static <T extends Serializable> T deepCopy( T orig ) {
         try {

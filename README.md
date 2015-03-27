@@ -208,24 +208,17 @@ the condition never happens, then the test will time out (3 seconds by default, 
 would require much longer.
 
 
-### Stochastic Testing
+### Concurrent Stochastic Testing
 
-Spin up n threads that perform the same step with random data against the concurrent data structure.  After
-all of the threads have completed, verify the results.
+When testing that a piece of code is thread safe, it is useful to be able to spin up multiple threads
+that each exercise the same code together.
 
-The following example starts up n threads.  Each thread will invoke the 'step()' method of an AssertJob m times from
-each thread, passing in the 'state' of the thread on each call.  The state always null on the first call, and will
-be the value returned from the last call to 'step()' from that thread.  The AssertJob itself must be immutable.
+JUnitMosaic.multiThreaded spins up n threads that perform invokes the same supplied function and
+collects the results returned by each call.
 
-The code that starts the threads, makes the calls to 'step()' and waits for all of the threads to complete
-is:
-
-    JUnitMosaic.multiThreadedAssert(new AssertJob<List<String>>() {...})
-
-Its result is a list of the state of each of the threads used in the test.  The test method is then free
-to process the results in any way that is required.  In this example the state is a collection of every
-object pushed on to the stack.  Thus the final test after the threads have finished pushing is to verify
-that the objects in the stack match the objects reported as having been pushed.
+The following example shows how a stack could be tested for thread safety.  Each thread adds n
+items onto the stack, and then after each thread has completed the stack is inspected to make sure
+that each of the items that was expected to be on the stack is in fact there.
 
 
     @RunWith(JUnitMosaicRunner.class)
@@ -239,23 +232,23 @@ that the objects in the stack match the objects reported as having been pushed.
         public void concurrentPushPopTest() {
             final List<String> stack = Collections.synchronizedList(new ArrayList<String>());
 
-            List<List<String>> perThreadResults = JUnitMosaic.multiThreadedAssert(new AssertJob<List<String>>() {
-                public List<String> step( List<String> expectedStateSoFar ) {
-                    if ( expectedStateSoFar == null ) {
-                        expectedStateSoFar = new ArrayList<String>();
+            List<List<String>> itemsPushedByEachThread = JUnitMosaic.multiThreaded( new TakesIntFunction<List<String>>() {
+                public List<String> invoke( int numIterations ) {
+                    List<String> allGeneratedValues = new ArrayList<String>();
+
+                    for ( int i = 0; i < numIterations; i++ ) {
+                        String v = RND_STRING.next();
+
+                        stack.add( v );
+                        allGeneratedValues.add( v );
                     }
 
-                    String v = RND_STRING.next();
-
-                    stack.add(v);
-                    expectedStateSoFar.add(v);
-
-                    return expectedStateSoFar;
+                    return allGeneratedValues;
                 }
-            });
+            } );
 
 
-            verifyStack( stack, perThreadResults );
+            verifyStack( stack, itemsPushedByEachThread );
         }
 
 
@@ -286,7 +279,38 @@ that the objects in the stack match the objects reported as having been pushed.
 
     }
 
+In Java8, we can use lambdas and streams to simplify further.  To verify that the test detects when
+the stack is not thread safe, then remove the call to synchronizedList from the example.  The test
+will then fail.
 
 
+    private static final Generator<String > RND_STRING = PrimitiveGenerators.strings();
+
+    @Test
+    public void concurrentPushPopTest() {
+        List<String> stack = Collections.synchronizedList( new ArrayList<>() );
+
+        List<List<String>> itemsPushedByEachThread = JUnitMosaic.multiThreaded( numIterations -> {
+            List<String> allGeneratedValues = new ArrayList<>();
+
+            for ( int i = 0; i < numIterations; i++ ) {
+                String v = RND_STRING.next();
+
+                stack.add( v );
+                allGeneratedValues.add( v );
+            }
+
+            return allGeneratedValues;
+        } );
 
 
+        verifyStack( stack, itemsPushedByEachThread );
+    }
+
+
+    private void verifyStack( List<String> stack, List<List<String>> perThreadResults ) {
+        Set<String> expected = perThreadResults.stream().flatMap(List::stream).collect( Collectors.toSet() );
+        Set<String> actual   = new HashSet<>( stack );
+
+        assertEquals( expected, actual );
+    }

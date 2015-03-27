@@ -1,10 +1,9 @@
 package com.softwaremosaic.junit;
 
 import com.softwaremosaic.junit.lang.Predicate;
-import com.softwaremosaic.junit.tools.AssertJob;
-import com.softwaremosaic.junit.tools.ConcurrentAsserter;
+import com.softwaremosaic.junit.lang.TakesIntFunction;
+import com.softwaremosaic.junit.tools.ConcurrentTester;
 import net.java.quickcheck.Generator;
-import net.java.quickcheck.generator.PrimitiveGenerators;
 import org.junit.ComparisonFailure;
 import org.junit.internal.ArrayComparisonFailure;
 import org.junit.internal.ExactComparisonCriteria;
@@ -55,46 +54,38 @@ public class JUnitMosaic extends org.junit.Assert {
 
 
     /**
-     * Spin up n threads that invoke the step() method of the supplied instance of AssertJob.  This
-     * method will not return until all of the threads have completed calling 'step()' a random number
-     * of times.<p/>
+     * Spin up n threads that each invoke the concurrentJob.  This method will not return until all of
+     * the threads have completed.
      *
-     * Each thread will invoke the 'step()' method by passing in the 'state' of the thread on each call.
-     * The state is always null on the first call, and from then on will be the value returned from
-     * the last call to 'step()' from that thread.<p/>
+     * @param concurrentJob the concurrent work to be carried out from multiple threads, its argument
+     *                      is the number of times that the job has been requested to repeat its work.
      *
-     * The AssertJob itself must be immutable.
-     *
-     *
-     * @param concurrentJob the concurrent work to be carried out from multiple threads
-     *
-     * @return a list containing the result of each threads final call to 'step()'
+     * @return a list containing the result of each threads call to concurrentJob
      */
-    public static <T> List<T> runFromMultipleThreads(AssertJob<T> concurrentJob) {
-        int                numThreads                 = Runtime.getRuntime().availableProcessors() * 4;
-        Generator<Integer> numStepsPerThreadGenerator = PrimitiveGenerators.integers(0, 100);
+    public static <T> List<T> multiThreaded( TakesIntFunction<T> concurrentJob ) {
+        String           name   = new Exception().getStackTrace()[1].getMethodName();
+        ConcurrentTester worker = new ConcurrentTester( name, concurrentJob );
 
-        return multiThreadedAssert( numThreads, concurrentJob, numStepsPerThreadGenerator );
+        return worker.runToCompletion();
     }
 
     /**
-     * Spin up n threads that invoke the step() method of the supplied instance of AssertJob.  This
-     * method will not return until all of the threads have completed calling 'step()' a random number
-     * of times.<p/>
+     * Spin up n threads that each invoke the concurrentJob.  This method will not return until all of
+     * the threads have completed.
      *
-     * Each thread will invoke the 'step()' method by passing in the 'state' of the thread on each call.
-     * The state is always null on the first call, and from then on will be the value returned from
-     * the last call to 'step()' from that thread.<p/>
+     * @param numThreads    the number of threads to use in the test
+     * @param concurrentJob the concurrent work to be carried out from multiple threads, its argument
+     *                      is the number of times that the job has been requested to repeat its work.
+     * @param numStepsPerThreadGenerator how many times should each thread request concurrentJob to repeat
+     *                                   its own work?  This value becomes the argument past to concurrentJob.
      *
-     * The AssertJob itself must be immutable.
-     *
-     *
-     * @param concurrentJob the concurrent work to be carried out from multiple threads
-     *
-     * @return a list containing the result of each threads final call to 'step()'
+     * @return a list containing the result of each threads call to concurrentJob
      */
-    public static <T> List<T> multiThreadedAssert( int numThreads, AssertJob<T> concurrentJob, Generator<Integer> numStepsPerThreadGenerator ) {
-        ConcurrentAsserter worker = new ConcurrentAsserter( numThreads, concurrentJob, numStepsPerThreadGenerator );
+    public static <T> List<T> multiThreaded( int numThreads, TakesIntFunction<T> concurrentJob, Generator<Integer> numStepsPerThreadGenerator ) {
+        String           name   = new Exception().getStackTrace()[1].getMethodName();
+        ConcurrentTester worker = new ConcurrentTester( name, concurrentJob )
+                                      .withNumThreads( numThreads )
+                                      .withIterationCountGenerator( numStepsPerThreadGenerator );
 
         return worker.runToCompletion();
     }

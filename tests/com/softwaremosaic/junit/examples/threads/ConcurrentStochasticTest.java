@@ -3,7 +3,7 @@ package com.softwaremosaic.junit.examples.threads;
 import com.softwaremosaic.junit.JUnitMosaic;
 import com.softwaremosaic.junit.JUnitMosaicRunner;
 import com.softwaremosaic.junit.annotations.Test;
-import com.softwaremosaic.junit.tools.AssertJob;
+import com.softwaremosaic.junit.lang.TakesIntFunction;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import org.junit.runner.RunWith;
@@ -32,23 +32,23 @@ public class ConcurrentStochasticTest {
     public void concurrentPushPopTest() {
         final List<String> stack = Collections.synchronizedList(new ArrayList<String>());
 
-        List<List<String>> perThreadResults = JUnitMosaic.runFromMultipleThreads(new AssertJob<List<String>>() {
-            public List<String> step(List<String> expectedStateSoFar) {
-                if (expectedStateSoFar == null) {
-                    expectedStateSoFar = new ArrayList<String>();
+        List<List<String>> itemsPushedByEachThread = JUnitMosaic.multiThreaded( new TakesIntFunction<List<String>>() {
+            public List<String> invoke( int numIterations ) {
+                List<String> allGeneratedValues = new ArrayList<String>();
+
+                for ( int i=0; i<numIterations; i++ ) {
+                    String v = RND_STRING.next();
+
+                    stack.add( v );
+                    allGeneratedValues.add( v );
                 }
 
-                String v = RND_STRING.next();
-
-                stack.add(v);
-                expectedStateSoFar.add(v);
-
-                return expectedStateSoFar;
+                return allGeneratedValues;
             }
-        });
+        } );
 
 
-        verifyStack( stack, perThreadResults );
+        verifyStack( stack, itemsPushedByEachThread );
     }
 
     @Test
@@ -56,28 +56,28 @@ public class ConcurrentStochasticTest {
         final List<String> stack = new ArrayList<String>();
 
         try {
-            List<List<String>> perThreadResults = JUnitMosaic.runFromMultipleThreads(new AssertJob<List<String>>() {
-                public List<String> step(List<String> expectedStateSoFar) {
-                    if (expectedStateSoFar == null) {
-                        expectedStateSoFar = new ArrayList<String>();
+            List<List<String>> itemsPushedByEachThread = JUnitMosaic.multiThreaded( new TakesIntFunction<List<String>>() {
+                public List<String> invoke( int numIterations ) {
+                    List<String> allGeneratedValues = new ArrayList<String>();
+
+                    for ( int i = 0; i < numIterations; i++ ) {
+                        String v = RND_STRING.next();
+
+                        stack.add( v );
+                        allGeneratedValues.add( v );
                     }
 
-                    String v = RND_STRING.next();
-
-                    stack.add(v);
-                    expectedStateSoFar.add(v);
-
-                    return expectedStateSoFar;
+                    return allGeneratedValues;
                 }
-            });
+            } );
 
 
 
-            verifyStack( stack, perThreadResults );
+            verifyStack( stack, itemsPushedByEachThread );
 
             fail( "expected there to be a problem" );
         } catch ( Throwable e ) {
-
+            // expected
         }
     }
 
@@ -96,6 +96,7 @@ public class ConcurrentStochasticTest {
 
         assertEquals( "stack is not thread safe; the stack has lost the following items: " + allPushedItems, 0, allPushedItems.size() );
     }
+
 
     private <T> List<T> flatten( List<List<T>> perThreadResults ) {
         List<T> all = new ArrayList<T>();
