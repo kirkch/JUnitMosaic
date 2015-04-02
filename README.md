@@ -288,7 +288,8 @@ will then fail.
 
     @Test
     public void concurrentPushPopTest() {
-        List<String> stack = Collections.synchronizedList( new ArrayList<>() );
+          List<String> stack = new ArrayList<>();                                    // stack is not thread safe - test will fail
+//        List<String> stack = Collections.synchronizedList( new ArrayList<>() );    // replace the above line with this one to fix the test
 
         List<List<String>> itemsPushedByEachThread = JUnitMosaic.multiThreaded( numIterations -> {
             List<String> allGeneratedValues = new ArrayList<>();
