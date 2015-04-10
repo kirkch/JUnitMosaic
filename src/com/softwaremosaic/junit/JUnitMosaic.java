@@ -7,6 +7,7 @@ import net.java.quickcheck.Generator;
 import org.junit.ComparisonFailure;
 import org.junit.internal.ArrayComparisonFailure;
 import org.junit.internal.ExactComparisonCriteria;
+import org.junit.internal.runners.model.MultipleFailureException;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -17,7 +18,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.Vector;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -326,6 +330,91 @@ public class JUnitMosaic extends org.junit.Assert {
     public static void assertArrayEquals(Object expecteds, Object actuals) throws ArrayComparisonFailure {
         new ExactComparisonCriteria().arrayEquals( "",  expecteds, actuals );
     }
+
+    /**
+     * Invokes n jobs concurrently and waits for them to all complete.  Very similar in principle to
+     * JUnitMosaic.multiThreaded() however where function takes a single job and invokes it n times
+     * concurrently this function takes n jobs and runs each of them once concurrently.<p/>
+     *
+     * Will wait up to 10 seconds for all of the jobs to complete before aborting the run.
+     */
+    public static void runConcurrentlyAndWaitFor( Runnable...jobs ) throws MultipleFailureException {
+        runConcurrentlyAndWaitFor( inferCallerRefFromCallStack(), jobs );
+    }
+
+    private static String inferCallerRefFromCallStack() {
+        try {
+            StackTraceElement caller    = new RuntimeException().getStackTrace()[2];
+            String            callerFQN = caller.getClassName();
+            String            callerRef = Class.forName( callerFQN ).getSimpleName() + "." + caller.getMethodName();
+
+            return callerRef;
+        } catch ( ClassNotFoundException ex ) {
+            // very very unlikely to ever occur, as we read the name of the class off of the callers stack trace
+            throw new RuntimeException( ex );
+        }
+    }
+
+    /**
+     * Invokes n jobs concurrently and waits for them to all complete.  Very similar in principle to
+     * JUnitMosaic.multiThreaded() however where function takes a single job and invokes it n times
+     * concurrently this function takes n jobs and runs each of them once concurrently.<p/>
+     *
+     * Will wait up to 10 seconds for all of the jobs to complete before aborting the run.
+     */
+    public static void runConcurrentlyAndWaitFor( String name, Runnable...jobs ) throws MultipleFailureException {
+        runConcurrentlyAndWaitFor( name, 10, jobs );
+    }
+
+    /**
+     * Invokes n jobs concurrently and waits for them to all complete.  Very similar in principle to
+     * JUnitMosaic.multiThreaded() however where function takes a single job and invokes it n times
+     * concurrently this function takes n jobs and runs each of them once concurrently.
+     *
+     * @param maxDurationSeconds will wait up to this many seconds before aborting the run
+     */
+    public static void runConcurrentlyAndWaitFor( String name, int maxDurationSeconds, Runnable...jobs ) throws MultipleFailureException {
+        final CountDownLatch  startingLineLatch  = new CountDownLatch( jobs.length );
+        final CountDownLatch  finishingLineLatch = new CountDownLatch( jobs.length );
+        final List<Throwable> errors             = new Vector<>();
+
+
+        for ( int i=0; i<jobs.length; i++ ) {
+            final Runnable job = jobs[i];
+            new Thread(name + i) {
+                public void run() {
+                    startingLineLatch.countDown();  // wait for all job threads to reach the starting line
+
+                    try {
+                        job.run();
+                    } catch ( Throwable e ) {
+                        errors.add( e );
+                    } finally {
+                        finishingLineLatch.countDown();
+                    }
+                }
+            }.start();
+        }
+
+        try {
+            finishingLineLatch.await( maxDurationSeconds, TimeUnit.SECONDS );
+
+            if ( !errors.isEmpty() ) {
+                // TODO suggest to JUnit that MultipleFailureException becomes an unchecked exception
+                // TODO suggest to JUnit that MultipleFailureException.assertEmpty be changed to not throw Throwable
+                // TODO check the latest version of JUnit ;)
+
+                // NB we must throw this exception without wrapping to a typed exception because
+                // the JUnit infrastructure performs instanceof checks that will detect this exception
+                // and pull it apart for reporting purposes.. so for now, all clients must suffer
+                // the typed exception by passing them on without catching them.
+                throw new MultipleFailureException(errors);
+            }
+        } catch ( InterruptedException e ) {
+            throw new RuntimeException( e );
+        }
+    }
+
 
 
 

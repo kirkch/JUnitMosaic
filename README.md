@@ -208,12 +208,46 @@ the condition never happens, then the test will time out (3 seconds by default, 
 would require much longer.
 
 
+# Run N jobs concurrently
+
+JUnitMosaic.runConcurrentlyAndWaitFor is useful when one needs to run N tasks concurrently and
+not continue until they have all completed.  The method takes N instances of runnable, starts them
+all, waits for them to start as thread creation can take awhile and then unleashes them all at the
+same time.  The method does not return until all of the tasks have returned.
+
+The following example spins up two threads which each grab the name of the running thread
+and stores it into a collection for assertion later on.
+
+
+    @Test( threadCheck=true )
+    public void runConcurrentlyAndWaitFor() throws MultipleFailureException {
+        final List<String> jobThreadNames = new Vector<>();
+
+        Runnable job1 = new Runnable() {
+            public void run() {
+                jobThreadNames.add( Thread.currentThread().getName() );
+            }
+        };
+
+        Runnable job2 = new Runnable() {
+            public void run() {
+                jobThreadNames.add( Thread.currentThread().getName() );
+            }
+        };
+
+        JUnitMosaic.runConcurrentlyAndWaitFor( job1, job2 );
+
+        Collections.sort( jobThreadNames );
+
+        List<String> expected = Arrays.asList( "ThreadingTests.runConcurrentlyAndWaitFor0", "ThreadingTests.runConcurrentlyAndWaitFor1" );
+        Assert.assertEquals( expected, jobThreadNames );
+    }
+
+
+
 ### Concurrent Stochastic Testing
 
-When testing that a piece of code is thread safe, it is useful to be able to spin up multiple threads
-that each exercise the same code together.
-
-JUnitMosaic.multiThreaded spins up n threads that perform invokes the same supplied function and
+JUnitMosaic.multiThreaded spins up n threads that invokes the same supplied function and
 collects the results returned by each call.
 
 The following example shows how a stack could be tested for thread safety.  Each thread adds n
@@ -315,3 +349,5 @@ will then fail.
 
         assertEquals( expected, actual );
     }
+
+

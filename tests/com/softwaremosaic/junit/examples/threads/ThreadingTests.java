@@ -1,9 +1,16 @@
 package com.softwaremosaic.junit.examples.threads;
 
+import com.softwaremosaic.junit.JUnitMosaic;
 import com.softwaremosaic.junit.JUnitMosaicRunner;
 import com.softwaremosaic.junit.annotations.Test;
+import org.junit.Assert;
+import org.junit.internal.runners.model.MultipleFailureException;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -32,6 +39,34 @@ public class ThreadingTests {
         }.start();
 
         keepRunning.lazySet(false);   // NB comment this line out to prevent the thread from finishing, and to see the test fail
+    }
+
+
+    /**
+     * Run n jobs together.
+     */
+    @Test( threadCheck=true )
+    public void runConcurrentlyAndWaitFor() throws MultipleFailureException {
+        final List<String> jobThreadNames = new Vector<>();
+
+        Runnable job1 = new Runnable() {
+            public void run() {
+                jobThreadNames.add( Thread.currentThread().getName() );
+            }
+        };
+
+        Runnable job2 = new Runnable() {
+            public void run() {
+                jobThreadNames.add( Thread.currentThread().getName() );
+            }
+        };
+
+        JUnitMosaic.runConcurrentlyAndWaitFor( job1, job2 );
+
+        Collections.sort( jobThreadNames );
+
+        List<String> expected = Arrays.asList( "ThreadingTests.runConcurrentlyAndWaitFor0", "ThreadingTests.runConcurrentlyAndWaitFor1" );
+        Assert.assertEquals( expected, jobThreadNames );
     }
 
 }
