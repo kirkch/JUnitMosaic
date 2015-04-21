@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -419,13 +418,20 @@ public class JUnitMosaic extends org.junit.Assert {
 
 
     private static String joinParagraph( List<String> paragraph ) {
-        StringJoiner joiner = new StringJoiner("\n");
+        StringBuilder buf = new StringBuilder();
 
+        boolean separatorFlag = false;
         for ( String s : paragraph ) {
-            joiner.add( s );
+            if ( separatorFlag ) {
+                buf.append("\n");
+            } else {
+                separatorFlag = true;
+            }
+
+            buf.append(s);
         }
 
-        return joiner.toString();
+        return buf.toString();
     }
 
 

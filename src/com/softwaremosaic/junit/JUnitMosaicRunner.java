@@ -76,11 +76,10 @@ public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
                             ThreadChecker.testAboutToStart( testAnnotation );
                         }
                     });
-
-
-                    exceptionCollector.throwIfAnyExceptionsWereCollected();
-                    withBefores.evaluate();
                 }
+
+                exceptionCollector.throwIfAnyExceptionsWereCollected();
+                withBefores.evaluate();
             }
         };
     }
@@ -95,14 +94,14 @@ public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
                 final ExceptionCollector exceptionCollector = new ExceptionCollector();
                 final Test               testAnnotation = method.getAnnotation(Test.class);
 
-                if ( testAnnotation != null ) {
-                    exceptionCollector.invokeAndCaptureException( new FunctionS0() {
-                        @Override
-                        public void invoke() throws Throwable {
-                            withAfters.evaluate();
-                        }
-                    } );
+                exceptionCollector.invokeAndCaptureException( new FunctionS0() {
+                    @Override
+                    public void invoke() throws Throwable {
+                        withAfters.evaluate();
+                    }
+                } );
 
+                if ( testAnnotation != null ) {
                     exceptionCollector.invokeAndCaptureException( new FunctionS0() {
                         @Override
                         public void invoke() throws Throwable {
@@ -116,10 +115,9 @@ public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
                             TestExecutionLock.releaseTestLock( testAnnotation );
                         }
                     } );
-
-                    exceptionCollector.throwIfAnyExceptionsWereCollected();
                 }
 
+                exceptionCollector.throwIfAnyExceptionsWereCollected();
             }
         };
     }
