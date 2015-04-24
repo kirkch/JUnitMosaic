@@ -202,10 +202,18 @@ When waiting for an object to become GC'd, the following helper can be used:
     JUnitMosic.spinUntilReleased( weakRef );
 
 The advantage of this approach is that the moment that the async condition becomes true, then the
-test will move on.  This keeps the test fast and responsive.  It should also be noted that if
-the condition never happens, then the test will time out (3 seconds by default, but can be specified).
-3 seconds is usually plenty for small and fast unit tests; obviously integration and system tests
-would require much longer.
+test will move on.  This keeps the test fast and responsive.
+
+#### Spin lock time outs
+
+If the condition never happens, then the test will time out (3 seconds by default, but can be
+specified).  3 seconds is usually plenty for small and fast unit tests; obviously integration and
+system tests would require much longer.  If we are unlucky and a GC event delays the test, or
+worse swap usage or some other JVM/OS related stall then usually the use of a 3 second timer
+would cause a flickering test;  Sometimes it would pass, and some times it would fail.  The
+JUnitMosaic spin methods all compensate for system stalls by tracking how much delay occurs in
+scheduling threads, the more delay that occurs then the more time is given to the spin lock before
+the test will abort itself.
 
 
 # Run N jobs concurrently

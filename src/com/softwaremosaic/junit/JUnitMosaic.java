@@ -3,6 +3,7 @@ package com.softwaremosaic.junit;
 import com.softwaremosaic.junit.lang.Predicate;
 import com.softwaremosaic.junit.lang.TakesIntFunction;
 import com.softwaremosaic.junit.tools.ConcurrentTester;
+import com.softwaremosaic.junit.tools.SystemStallDetector;
 import net.java.quickcheck.Generator;
 import org.junit.ComparisonFailure;
 import org.junit.internal.ArrayComparisonFailure;
@@ -113,6 +114,10 @@ public class JUnitMosaic extends org.junit.Assert {
         return count;
     }
 
+    /**
+     * This method will not return until the number of active threads with the specified prefix
+     * equals 'targetCount' or n seconds of active CPU time has past.
+     */
     public static void spinUntilThreadCountsReaches( final String targetThreadNamePrefix, final int targetCount ) {
         spinUntilTrue(new Callable<Boolean>() {
             public Boolean call() throws Exception {
@@ -123,7 +128,7 @@ public class JUnitMosaic extends org.junit.Assert {
 
     /**
      * Block the current thread until there are no threads whose name begins with
-     * the specified prefix running.
+     * the specified prefix running or n seconds of active CPU time has past.
      */
     public static void spinUntilAllThreadsComplete( String targetThreadNamePrefix ) {
         spinUntilThreadCountsReaches( targetThreadNamePrefix, 0 );
@@ -150,21 +155,22 @@ public class JUnitMosaic extends org.junit.Assert {
     }
 
     /**
-     * Block the current thread until the specified condition is true.
+     * Block the current thread until the specified condition is true or n seconds of active CPU
+     * time has past.
      */
     public static void spinUntilTrue( Callable<Boolean> predicate ) {
         spinUntilTrue( 3000, predicate );
     }
 
     /**
-     * Block the current thread until the specified condition is true.
+     * Block the current thread until the specified condition is true or n seconds has past.
      */
     public static void spinUntilTrue( String errorMessage, Callable<Boolean> predicate ) {
         spinUntilTrue( errorMessage, 3000, predicate );
     }
 
     /**
-     * Block the current thread until the two arguments become equal.
+     * Block the current thread until the two arguments become equal or n seconds has past.
      */
     public static <T> void spinUntilEquals( final T expected, final Callable<T> fetcher ) {
         final AtomicReference<T> lastResult = new AtomicReference<>();
@@ -189,23 +195,36 @@ public class JUnitMosaic extends org.junit.Assert {
     }
 
     /**
-     * Block the current thread until the specified condition is true.
+     * Block the current thread until the specified condition is true or at least timeoutMillis of
+     * active CPU time has past.  System stalls, such as stop the world GCs or swap usage will not
+     * count towards timeoutMillis.
      */
     public static void spinUntilTrue( long timeoutMillis, Callable<Boolean> predicate ) {
         spinUntilTrue( "Timedout after " + timeoutMillis + "ms", timeoutMillis, predicate );
     }
 
     /**
-     * Block the current thread until the specified condition is true.
+     * Block the current thread until the specified condition is true or at least timeoutMillis of
+     * active CPU time has past.  System stalls, such as stop the world GCs or swap usage will not
+     * count towards timeoutMillis.
      */
     public static void spinUntilTrue( String errorMessage, long timeoutMillis, Callable<Boolean> predicate ) {
-        long startMillis = System.currentTimeMillis();
+        long startMillis  = System.currentTimeMillis();
+        long systemDelay0 = SystemStallDetector.getTotalDelaySoFarMillis();
 
         while ( !callPredicate(predicate) ) {
             long durationMillis = System.currentTimeMillis() - startMillis;
 
             if ( durationMillis > timeoutMillis ) {
-                throw new IllegalStateException( errorMessage );
+                // we have exceeded the max duration via the wall clock time;  however has there
+                // been any major stop the world GCs or OS stalls due to IO etc?  If so, give this
+                // spin more time.
+                long systemDelay1     = SystemStallDetector.getTotalDelaySoFarMillis();
+                long totalDelayMillis = systemDelay1 - systemDelay0;
+
+                if ( durationMillis-totalDelayMillis > timeoutMillis ) {
+                    throw new IllegalStateException( errorMessage );
+                }
             }
 
             Thread.yield();

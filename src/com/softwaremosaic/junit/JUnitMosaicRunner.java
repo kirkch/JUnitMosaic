@@ -5,6 +5,7 @@ import com.softwaremosaic.junit.annotations.Test;
 import com.softwaremosaic.junit.lang.TestExecutionLock;
 import com.softwaremosaic.junit.quickcheck.GeneratorFactory;
 import com.softwaremosaic.junit.tools.MemChecker;
+import com.softwaremosaic.junit.tools.SystemStallDetector;
 import com.softwaremosaic.junit.tools.ThreadChecker;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.distribution.RandomConfiguration;
@@ -34,6 +35,8 @@ public class JUnitMosaicRunner extends BlockJUnit4ClassRunner {
 
     public JUnitMosaicRunner(Class<?> klass) throws InitializationError {
         super( klass );
+
+        SystemStallDetector.init();
     }
 
     @Override
