@@ -1,5 +1,6 @@
 package com.softwaremosaic.junit;
 
+import com.softwaremosaic.junit.lang.Function0;
 import com.softwaremosaic.junit.lang.Predicate;
 import com.softwaremosaic.junit.lang.TakesIntFunction;
 import com.softwaremosaic.junit.tools.ConcurrentTester;
@@ -37,6 +38,19 @@ public class JUnitMosaic extends org.junit.Assert {
     private static final AtomicLong nextLongCounter = new AtomicLong(0);
 
 
+
+    public static void assertException( Throwable expected, Function0 op ) {
+        try {
+            op.invoke();
+            fail( "No exception thrown.  Expected " + expected );
+        } catch ( Throwable ex ) {
+            assertEquals( toString(expected), toString(ex) );
+        }
+    }
+
+    private static String toString( Throwable ex ) {
+        return ex.getClass().getCanonicalName() + ": " + ex.getMessage();
+    }
 
     public static void assertEventually( Predicate predicate ) {
         assertEventually( 3000, predicate );
