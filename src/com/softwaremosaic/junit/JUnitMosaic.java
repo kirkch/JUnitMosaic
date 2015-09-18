@@ -10,6 +10,7 @@ import org.junit.ComparisonFailure;
 import org.junit.internal.ArrayComparisonFailure;
 import org.junit.internal.ExactComparisonCriteria;
 import org.junit.internal.runners.model.MultipleFailureException;
+import testmosaics.audit.Backdoor;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -23,6 +24,7 @@ import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -447,6 +449,82 @@ public class JUnitMosaic extends org.junit.Assert {
         }
     }
 
+    /**
+     * Assert that the result of invoking fetcher is null.  Fetcher may block, so it is invoked
+     * from a separate thread and given a few seconds to generate a result.  Failure to return in
+     * time will cause the assertion to fail.
+     */
+    public static <T> void assertPotentiallyBlockingCallNull( Function0<T> fetcher ) {
+        assertPotentiallyBlockingCallEquals( null, fetcher );
+    }
+
+    /**
+     * Assert that the result of invoking fetcher is null.  Fetcher may block, so it is invoked
+     * from a separate thread and given a few seconds to generate a result.  Failure to return in
+     * time will cause the assertion to fail.
+     */
+    public static <T> void assertPotentiallyBlockingCallEquals( String expected, final Function0<T> fetcher ) {
+        final AtomicReference<T> value        = new AtomicReference<>();
+        final AtomicBoolean      hasThreadRun = new AtomicBoolean( false );
+
+        Thread t = new Thread() {
+            public void run() {
+                T v = fetcher.invoke();
+
+                value.set(v);
+                hasThreadRun.set(true);
+            }
+        };
+        t.setDaemon( true );
+        t.start();
+
+        JUnitMosaic.spinUntilTrue( new Callable<Boolean>() {
+            public Boolean call() throws Exception {
+                return hasThreadRun.get();
+            }
+        } );
+
+        assertEquals( expected, value.get() );
+    }
+
+    /**
+     * Asserts that invoking the supplied method will block the calling thread.  Performs the test
+     * from a new thread so as to not stall the test.
+     */
+    public static <T> void assertFunctionBlocksTheCallingThread( final Function0<T> blockingFunction ) {
+        final AtomicBoolean hasThreadStarted = new AtomicBoolean( false );
+        final AtomicBoolean isThreadRunning = new AtomicBoolean( false );
+
+        Thread t = new Thread() {
+            public void run() {
+                isThreadRunning.set( true );
+                hasThreadStarted.set( true );
+
+                try {
+                    blockingFunction.invoke();
+                } finally {
+                    isThreadRunning.set( false );
+                }
+            }
+        };
+
+        t.setDaemon( true );
+        t.start();
+
+        try {
+            JUnitMosaic.spinUntilTrue( new Callable<Boolean>() {
+                public Boolean call() throws Exception {
+                    return isThreadRunning.get();
+                }
+            } );
+
+            Backdoor.sleep( 100 );
+
+            assertTrue( isThreadRunning.get() );
+        } finally {
+            t.interrupt();  // try to wake the thread up so that it can be shutdown
+        }
+    }
 
 
 
