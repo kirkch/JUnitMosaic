@@ -469,10 +469,13 @@ public class JUnitMosaic extends org.junit.Assert {
 
         Thread t = new Thread() {
             public void run() {
-                T v = fetcher.invoke();
+                try {
+                    T v = fetcher.invoke();
 
-                value.set(v);
-                hasThreadRun.set(true);
+                    value.set( v );
+                } finally {
+                    hasThreadRun.set( true );
+                }
             }
         };
         t.setDaemon( true );
@@ -514,13 +517,13 @@ public class JUnitMosaic extends org.junit.Assert {
         try {
             JUnitMosaic.spinUntilTrue( new Callable<Boolean>() {
                 public Boolean call() throws Exception {
-                    return isThreadRunning.get();
+                    return hasThreadStarted.get();
                 }
             } );
 
             Backdoor.sleep( 100 );
 
-            assertTrue( isThreadRunning.get() );
+            assertTrue( "method did not block", isThreadRunning.get() );
         } finally {
             t.interrupt();  // try to wake the thread up so that it can be shutdown
         }
