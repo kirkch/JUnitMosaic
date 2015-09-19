@@ -452,20 +452,23 @@ public class JUnitMosaic extends org.junit.Assert {
     /**
      * Assert that the result of invoking fetcher is null.  Fetcher may block, so it is invoked
      * from a separate thread and given a few seconds to generate a result.  Failure to return in
-     * time will cause the assertion to fail.
+     * time will cause the assertion to fail.  If the function throws an exception, then it will
+     * be rethrown by the testing thread
      */
     public static <T> void assertPotentiallyBlockingCallNull( Function0<T> fetcher ) {
         assertPotentiallyBlockingCallEquals( null, fetcher );
     }
 
     /**
-     * Assert that the result of invoking fetcher is null.  Fetcher may block, so it is invoked
+     * Assert that the result of invoking fetcher is equals the expected value.  Fetcher may block, so it is invoked
      * from a separate thread and given a few seconds to generate a result.  Failure to return in
-     * time will cause the assertion to fail.
+     * time will cause the assertion to fail.  If the function throws an exception, then it will
+     * be rethrown by the testing thread.
      */
-    public static <T> void assertPotentiallyBlockingCallEquals( String expected, final Function0<T> fetcher ) {
-        final AtomicReference<T> value        = new AtomicReference<>();
-        final AtomicBoolean      hasThreadRun = new AtomicBoolean( false );
+    public static <T> void assertPotentiallyBlockingCallEquals( T expected, final Function0<T> fetcher ) {
+        final AtomicReference<T>         value        = new AtomicReference<>();
+        final AtomicReference<Exception> exception    = new AtomicReference<>();
+        final AtomicBoolean              hasThreadRun = new AtomicBoolean( false );
 
         Thread t = new Thread() {
             public void run() {
@@ -473,6 +476,8 @@ public class JUnitMosaic extends org.junit.Assert {
                     T v = fetcher.invoke();
 
                     value.set( v );
+                } catch ( Exception ex ) {
+                    exception.set( ex );
                 } finally {
                     hasThreadRun.set( true );
                 }
@@ -487,16 +492,65 @@ public class JUnitMosaic extends org.junit.Assert {
             }
         } );
 
+        Exception ex = exception.get();
+        if ( ex != null ) {
+            Backdoor.throwException( ex );
+        }
+
         assertEquals( expected, value.get() );
     }
 
     /**
+     * Assert that the result of invoking fetcher is that it throws an exception.  Fetcher may block, so it is invoked
+     * from a separate thread and given a few seconds to generate a result.  Failure to return in
+     * time will cause the assertion to fail.  If the function throws an exception, then it will
+     * be rethrown by the testing thread.
+     */
+    public static <T> void assertPotentiallyBlockingCallThrows( Exception expected, final Function0<T> fetcher ) {
+        final AtomicReference<T>         value             = new AtomicReference<>();
+        final AtomicReference<Exception> exception         = new AtomicReference<>();
+        final AtomicBoolean              hasThreadFinished = new AtomicBoolean( false );
+
+        Thread t = new Thread() {
+            public void run() {
+                try {
+                    T v = fetcher.invoke();
+
+                    value.set( v );
+                } catch ( Exception ex ) {
+                    exception.set( ex );
+                } finally {
+                    hasThreadFinished.set( true );
+                }
+            }
+        };
+        t.setDaemon( true );
+        t.start();
+
+        JUnitMosaic.spinUntilTrue( new Callable<Boolean>() {
+            public Boolean call() throws Exception {
+                return hasThreadFinished.get();
+            }
+        } );
+
+        Exception ex = exception.get();
+        if ( ex == null ) {
+            fail( "no exception was throw, expected: " + expected );
+        }
+
+        assertEquals( expected.getClass(), ex.getClass() );
+        assertEquals( expected.getMessage(), ex.getMessage() );
+    }
+
+    /**
      * Asserts that invoking the supplied method will block the calling thread.  Performs the test
-     * from a new thread so as to not stall the test.
+     * from a new thread so as to not stall the test.  If the function throws an exception, then it will
+     * be rethrown by the testing thread
      */
     public static <T> void assertFunctionBlocksTheCallingThread( final Function0<T> blockingFunction ) {
-        final AtomicBoolean hasThreadStarted = new AtomicBoolean( false );
-        final AtomicBoolean isThreadRunning = new AtomicBoolean( false );
+        final AtomicBoolean              hasThreadStarted = new AtomicBoolean( false );
+        final AtomicReference<Exception> exception        = new AtomicReference<>();
+        final AtomicBoolean              isThreadRunning  = new AtomicBoolean( false );
 
         Thread t = new Thread() {
             public void run() {
@@ -505,6 +559,8 @@ public class JUnitMosaic extends org.junit.Assert {
 
                 try {
                     blockingFunction.invoke();
+                } catch ( Exception ex ) {
+                    exception.set(ex);
                 } finally {
                     isThreadRunning.set( false );
                 }
@@ -522,6 +578,11 @@ public class JUnitMosaic extends org.junit.Assert {
             } );
 
             Backdoor.sleep( 100 );
+
+            Exception ex = exception.get();
+            if ( ex != null ) {
+                Backdoor.throwException( ex );
+            }
 
             assertTrue( "method did not block", isThreadRunning.get() );
         } finally {
