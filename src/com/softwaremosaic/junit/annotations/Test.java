@@ -18,7 +18,7 @@ public @interface Test {
      * The number of times to repeat a test method that takes parameters.  Methods
      * that take no parameters will be run only once, as is normal with JUnit.
      */
-    int repeat() default 10;
+    int repeat() default 20;
 
     /**
      * Specifies the instance/class fields that hold instances of

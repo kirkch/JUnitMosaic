@@ -2,6 +2,7 @@ package com.softwaremosaic.junit.quickcheck;
 
 import com.softwaremosaic.junit.lang.Function0;
 import net.java.quickcheck.Generator;
+import net.java.quickcheck.generator.PrimitiveGeneratorSamples;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.distribution.Distribution;
 import net.java.quickcheck.generator.support.*;
@@ -150,6 +151,15 @@ public class GeneratorFactory {
             return new ArrayGenerator( 0, 10000, type.getComponentType(), distribution, this );
         } else {
             Function0<Generator> factory = generators.get(type);
+
+            if ( factory == null ) {
+                if ( type.isEnum() ) {
+                    return (Generator<T>) new EnumGenerator((Class) type, distribution);
+                }
+
+
+                throw new IllegalArgumentException( "Unable to find Generator for '"+type.getName()+"'" );
+            }
 
             return factory.invoke();
         }
