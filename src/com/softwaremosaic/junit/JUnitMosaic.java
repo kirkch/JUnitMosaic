@@ -1,5 +1,6 @@
 package com.softwaremosaic.junit;
 
+import com.softwaremosaic.junit.io.IndentWriter;
 import com.softwaremosaic.junit.lang.Function0;
 import com.softwaremosaic.junit.lang.Predicate;
 import com.softwaremosaic.junit.lang.TakesIntFunction;
@@ -14,9 +15,12 @@ import testmosaics.audit.Backdoor;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -29,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.unmodifiableSet;
+
 
 /**
  * A collection of tools that enhance writing of unit tests.
@@ -147,7 +152,7 @@ public class JUnitMosaic extends org.junit.Assert {
      * the specified prefix running or n seconds of active CPU time has past.
      */
     public static void spinUntilAllThreadsComplete( String targetThreadNamePrefix ) {
-        spinUntilThreadCountsReaches( targetThreadNamePrefix, 0 );
+        spinUntilThreadCountsReaches(targetThreadNamePrefix, 0);
     }
 
 
@@ -255,7 +260,7 @@ public class JUnitMosaic extends org.junit.Assert {
      * method will error.
      */
     public static void spinUntilReleased( final Reference ref ) {
-        spinUntilReleased( "value was not garbage collected", ref );
+        spinUntilReleased("value was not garbage collected", ref);
     }
 
     /**
@@ -267,7 +272,7 @@ public class JUnitMosaic extends org.junit.Assert {
     public static void spinUntilReleased( final String msg, final Reference ref ) {
         Runtime.getRuntime().gc();
 
-        spinUntilTrue( msg,  new Callable<Boolean>() {
+        spinUntilTrue(msg, new Callable<Boolean>() {
             public Boolean call() {
                 return ref.get() == null;
             }
@@ -281,7 +286,7 @@ public class JUnitMosaic extends org.junit.Assert {
         List<Reference> list = new ArrayList(objects.length);
 
         for ( Object o : objects ) {
-            list.add( new WeakReference(o) );
+            list.add(new WeakReference(o));
         }
 
         return list;
@@ -293,7 +298,7 @@ public class JUnitMosaic extends org.junit.Assert {
      */
     public static void spinUntilReleased( List<Reference> refs ) {
         for ( Reference ref : refs ) {
-            spinUntilReleased( ref );
+            spinUntilReleased(ref);
         }
     }
 
@@ -304,7 +309,7 @@ public class JUnitMosaic extends org.junit.Assert {
         SetComparison r = compare( expectedSet, actualSet );
 
         assertEquals( "The following elements were not expected: "+r.onlyInSetB, 0, r.onlyInSetB.size() );
-        assertEquals( "The following elements were expected, but did not occur: " + r.onlyInSetA, 0, r.onlyInSetA.size() );
+        assertEquals("The following elements were expected, but did not occur: " + r.onlyInSetA, 0, r.onlyInSetA.size());
     }
 
 
@@ -313,7 +318,7 @@ public class JUnitMosaic extends org.junit.Assert {
     private static <T> Set<T> copySet( Set<T> set ) {
         Set<T> copy = new HashSet<T>(set.size());
 
-        copy.addAll( set );
+        copy.addAll(set);
 
         return copy;
     }
@@ -354,7 +359,7 @@ public class JUnitMosaic extends org.junit.Assert {
         String a = joinParagraph(expected);
         String b = joinParagraph(actual);
 
-        assertEquals( a, b );
+        assertEquals(a, b);
     }
 
 
@@ -362,7 +367,7 @@ public class JUnitMosaic extends org.junit.Assert {
      * Uses reflection to support primitive arrays.
      */
     public static void assertArrayEquals(Object expecteds, Object actuals) throws ArrayComparisonFailure {
-        new ExactComparisonCriteria().arrayEquals( "",  expecteds, actuals );
+        new ExactComparisonCriteria().arrayEquals("", expecteds, actuals);
     }
 
     /**
@@ -373,7 +378,7 @@ public class JUnitMosaic extends org.junit.Assert {
      * Will wait up to 10 seconds for all of the jobs to complete before aborting the run.
      */
     public static void runConcurrentlyAndWaitFor( Runnable...jobs ) throws MultipleFailureException {
-        runConcurrentlyAndWaitFor( inferCallerRefFromCallStack(), jobs );
+        runConcurrentlyAndWaitFor(inferCallerRefFromCallStack(), jobs);
     }
 
     private static String inferCallerRefFromCallStack() {
@@ -456,7 +461,7 @@ public class JUnitMosaic extends org.junit.Assert {
      * be rethrown by the testing thread
      */
     public static <T> void assertPotentiallyBlockingCallNull( Function0<T> fetcher ) {
-        assertPotentiallyBlockingCallEquals( null, fetcher );
+        assertPotentiallyBlockingCallEquals(null, fetcher);
     }
 
     /**
@@ -494,10 +499,10 @@ public class JUnitMosaic extends org.junit.Assert {
 
         Exception ex = exception.get();
         if ( ex != null ) {
-            Backdoor.throwException( ex );
+            Backdoor.throwException(ex);
         }
 
-        assertEquals( expected, value.get() );
+        assertEquals(expected, value.get());
     }
 
     /**
@@ -535,11 +540,11 @@ public class JUnitMosaic extends org.junit.Assert {
 
         Exception ex = exception.get();
         if ( ex == null ) {
-            fail( "no exception was throw, expected: " + expected );
+            fail("no exception was throw, expected: " + expected);
         }
 
-        assertEquals( expected.getClass(), ex.getClass() );
-        assertEquals( expected.getMessage(), ex.getMessage() );
+        assertEquals(expected.getClass(), ex.getClass());
+        assertEquals(expected.getMessage(), ex.getMessage());
     }
 
     /**
@@ -567,7 +572,7 @@ public class JUnitMosaic extends org.junit.Assert {
             }
         };
 
-        t.setDaemon( true );
+        t.setDaemon(true);
         t.start();
 
         try {
@@ -590,6 +595,110 @@ public class JUnitMosaic extends org.junit.Assert {
         }
     }
 
+
+    /**
+     * Compares two ordered collections of data beans.  Very similar to the JUnit version however
+     * this version is enhanced to help IntelliJ provide a clearer picture of what the differences
+     * are.
+     */
+    public static <T> void assertBeansEqual( Iterable<T> expected, Iterable<T> actual ) {
+        Iterator<T> expectedIt = expected.iterator();
+        Iterator<T> actualIt   = actual.iterator();
+
+        while ( expectedIt.hasNext() ) {
+            if ( !actualIt.hasNext() ) {
+                throw new ComparisonFailure("actual has less values than expected", prettyPrintIterable(expected), prettyPrintIterable(actual));
+            }
+
+            T a = expectedIt.next();
+            T b = actualIt.next();
+
+            if ( !Objects.equals(a,b) ) {
+                throw new ComparisonFailure("mismatched values", prettyPrintIterable(expected), prettyPrintIterable(actual));
+            }
+        }
+
+        if ( actualIt.hasNext() ) {
+            throw new ComparisonFailure("actual has more values than expected", prettyPrintIterable(expected), prettyPrintIterable(actual));
+        }
+    }
+
+
+
+    private static <T> String prettyPrintIterable( Iterable<T> iterable ) {
+        if ( !iterable.iterator().hasNext() ) {
+            return "[]";
+        }
+
+        IndentWriter buf = new IndentWriter();
+
+        buf.println('[');
+
+        for ( T v : iterable ) {
+            buf.incIndent();
+            appendPrettyPrintedDTO(buf, v);
+            buf.newLine();
+            buf.decIndent();
+        }
+
+        buf.append( ']' );
+
+        return buf.toString();
+    }
+
+    private static <T> void appendPrettyPrintedDTO( IndentWriter buf, T v ) {
+        if ( v == null ) {
+            buf.append("null");
+
+            return;
+        }
+
+        Class<?> dtoClass = v.getClass();
+
+        buf.append(dtoClass.getSimpleName());
+
+        List<Field> fields = allFieldsFor(dtoClass);
+
+        if ( fields.isEmpty() ) {
+            buf.append("()");
+        } else {
+            buf.println('(');
+            buf.incIndent();
+
+            for ( Field f : fields ) {
+                f.setAccessible(true);
+
+                buf.append(f.getName());
+                buf.append('=');
+                try {
+                    buf.append(Objects.toString(f.get(v)));
+                    buf.newLine();
+                } catch ( IllegalAccessException e ) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            buf.decIndent();
+            buf.append(')');
+        }
+    }
+
+    private static <T> List<Field> allFieldsFor( Class<T> dto ) {
+        List<Field> allFields = new ArrayList<>();
+        Class       c         = dto;
+
+        while ( c != Object.class ) {
+            for ( Field f : c.getDeclaredFields() ) {
+                if ( !Modifier.isStatic(f.getModifiers()) && !Modifier.isTransient(f.getModifiers()) ) {
+                    allFields.add(f);
+                }
+            }
+
+            c = c.getSuperclass();
+        }
+
+        return allFields;
+    }
 
 
     private static String joinParagraph( List<String> paragraph ) {
