@@ -505,6 +505,24 @@ public class JUnitMosaic extends org.junit.Assert {
         assertEquals(expected, value.get());
     }
 
+    public static <T> void assertThrows( Exception expected, final Function0<T> op ) {
+        try {
+            op.invoke();
+
+            fail( "expected: " + expected );
+        } catch ( Throwable ex ) {
+            try {
+                assertEquals(expected.getClass(), ex.getClass());
+                assertEquals(expected.getMessage(), ex.getMessage());
+            } catch ( AssertionError e ) {
+                ex.printStackTrace();
+
+                throw e;
+            }
+        }
+
+    }
+
     /**
      * Assert that the result of invoking fetcher is that it throws an exception.  Fetcher may block, so it is invoked
      * from a separate thread and given a few seconds to generate a result.  Failure to return in
