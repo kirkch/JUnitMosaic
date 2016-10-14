@@ -9,7 +9,7 @@ public class Backdoor {
     private static final Unsafe unsafe = fetchUnsafe();
 
 
-    public static <T> T throwException( Throwable ex ) {
+    public static RuntimeException throwException( Throwable ex ) {
         if ( ex == null ) {
             throw new NullPointerException();
         }

@@ -2,6 +2,8 @@ package com.softwaremosaic.junit;
 
 import com.softwaremosaic.junit.io.IndentWriter;
 import com.softwaremosaic.junit.lang.Function0;
+import com.softwaremosaic.junit.lang.Function1;
+import com.softwaremosaic.junit.lang.IOUtils;
 import com.softwaremosaic.junit.lang.Predicate;
 import com.softwaremosaic.junit.lang.TakesIntFunction;
 import com.softwaremosaic.junit.tools.ConcurrentTester;
@@ -13,6 +15,7 @@ import org.junit.internal.ExactComparisonCriteria;
 import org.junit.internal.runners.model.MultipleFailureException;
 import testmosaics.audit.Backdoor;
 
+import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -44,6 +47,18 @@ public class JUnitMosaic extends org.junit.Assert {
     private static final Set        EMPTY           = unmodifiableSet( new HashSet() );
     private static final AtomicLong nextLongCounter = new AtomicLong(0);
 
+
+
+    public static <T> T withTempFile( String fileName, Function1<File,T> func ) {
+        File dir  = IOUtils.makeTempDirectory( "junit" );
+        File file = new File( dir, fileName );
+
+        try {
+            return func.invoke(file);
+        } finally {
+            IOUtils.deleteAll(dir);
+        }
+    }
 
 
     public static void assertException( Throwable expected, Function0 op ) {
